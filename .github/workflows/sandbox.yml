@@ -85,6 +85,15 @@ on:
         description: 'Image name to publish at github packages'
         required: true
         default: ""
+    secrets:
+      GITLEAKS_LICENSE:
+        required: true
+      SONAR_TOKEN:
+        required: true
+      SONAR_PROJECT_KEY:
+        required: true
+      SNYK_TOKEN:
+        required: true
 
 env:
 #plus
