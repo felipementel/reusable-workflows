@@ -81,12 +81,6 @@ on:
         description: 'Path to exclusion from sonar, like migrations. Use comma separation'
         required: true
         default: ""
-      #push-image
-      imageName:
-        type: string
-        description: 'Image name to publish at github packages'
-        required: true
-        default: ""
     secrets:
       SONAR_TOKEN:
         required: true
