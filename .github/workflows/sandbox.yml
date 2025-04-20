@@ -1,10 +1,10 @@
 name: Sanbox Dispatch ⚡
 run-name: "${{ github.actor }} - ${{ github.run_id }}"
 
-#SECRETS LOCAL: GITLEAKS_LICENSE, SNYK_TOKEN
+#SECRETS LOCAL: GITLEAKS_LICENSE, SNYK_TOKEN, SONAR_TOKEN
 #VARS LOCAL: SONAR_ORGANIZATION
 
-#SECRETS REMOTE: SONAR_TOKEN, SONAR_PROJECT_KEY
+#SECRETS REMOTE: SONAR_PROJECT_KEY
 
 on:
   pull_request:
@@ -209,7 +209,7 @@ jobs:
             /d:sonar.host.url="https://sonarcloud.io" \
             /d:sonar.scanner.scanAll=false \
             /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml \
-            /d:sonar.exclusions="${{ inputs.sonarExclusions || ' '}}"
+            /d:sonar.exclusions="${{ inputs.sonarExclusions || ''}}"
           dotnet restore ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
           dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj --no-incremental
           dotnet-coverage collect 'dotnet test ./src/' --output-format xml --output 'coverage.xml'
