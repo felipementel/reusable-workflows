@@ -1,8 +1,10 @@
 name: Sanbox Dispatch ⚡
 run-name: "${{ github.actor }} - ${{ github.run_id }}"
 
-#SECRETS: GITLEAKS_LICENSE, SONAR_TOKEN, SONAR_PROJECT_KEY, SNYK_TOKEN
-#VARS: SONAR_ORGANIZATION
+#SECRETS LOCAL: GITLEAKS_LICENSE, SNYK_TOKEN
+#VARS LOCAL: SONAR_ORGANIZATION
+
+#SECRETS REMOTE: SONAR_TOKEN, SONAR_PROJECT_KEY
 
 on:
   pull_request:
@@ -86,8 +88,6 @@ on:
         required: true
         default: ""
     secrets:
-      SONAR_TOKEN:
-        required: true
       SONAR_PROJECT_KEY:
         required: true
 
