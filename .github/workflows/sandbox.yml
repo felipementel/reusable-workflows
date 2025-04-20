@@ -103,8 +103,6 @@ env:
   BLUE: '\033[0;34m'
   RESET: '\033[0m'
 
-
-
 jobs:
   build:
     name: Build
@@ -306,6 +304,7 @@ jobs:
           
   check-image:
     name: Check if image exists
+    environment: ${{ inputs.environment }}
     runs-on: ubuntu-latest
     outputs:
       image-exists: ${{ steps.check-image-and-tag.outputs.IMAGE_EXISTS }}
