@@ -86,9 +86,13 @@ on:
         required: true
         default: ""
     secrets:
+      GITLEAKS_LICENSE:
+        required: true
       SONAR_TOKEN:
         required: true
       SONAR_PROJECT_KEY:
+        required: true
+      SNYK_TOKEN:
         required: true
 
 env:
@@ -196,6 +200,12 @@ jobs:
           dotnet tool install --global dotnet-sonarscanner
         # --tool-path .sonar/scanner
 
+      # - name: Listar diretórios
+      #   run: ls -R
+
+      # - name: Executar testes
+      #   run: find . -name "*.Tests.csproj" -print
+
       - name: 🔐 Build and analyze (Test ✅, Sonar ✅)
         if: ${{ inputs.unit-tests && inputs.sonar-qube }}
         env:
@@ -236,6 +246,9 @@ jobs:
         if: ${{ inputs.unit-tests && !inputs.sonar-qube }}
         run: |
           dotnet-coverage collect 'dotnet test ./src/' -f xml -o 'coverage.xml'
+
+      - name: Listar diretórios
+        run: ls -R
 
       - name: ReportGenerator
         if: ${{ inputs.unit-tests }}
