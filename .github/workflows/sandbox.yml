@@ -204,7 +204,7 @@ jobs:
         run: |
           dotnet-sonarscanner begin \
             /k:"${{ secrets.SONAR_PROJECT_KEY }}" \
-            /o:"${{ env.SONAR_ORGANIZATION }}" \
+            /o:"${{ vars.SONAR_ORGANIZATION }}" \
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
             /d:sonar.host.url="https://sonarcloud.io" \
             /d:sonar.scanner.scanAll=false \
