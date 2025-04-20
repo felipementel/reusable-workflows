@@ -90,7 +90,16 @@ on:
     secrets:
       SONAR_PROJECT_KEY:
         required: true
-
+        description: 'Sonar Project Key'
+      GITLEAKS_LICENSE:
+        required: true
+        description: 'Gitleaks License'
+      SNYK_TOKEN:
+        required: true
+        description: 'Snyk Token'
+      SONAR_TOKEN:
+        required: true
+        description: 'Sonar Token'
 env:
 #plus
   RED: '\033[0;31m'
