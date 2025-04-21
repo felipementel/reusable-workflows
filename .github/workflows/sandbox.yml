@@ -170,10 +170,10 @@ jobs:
             ColorTagSuffix="${YELLOW}"
           fi
 
-          echo -e "📦 ${GREEN} Version: $version"
-          echo -e "🔤 Prefix ${ColorTagPrefix}: ${versionPrefix:-não informado}"
-          echo -e "🔤 Suffix ${ColorTagSuffix}: ${versionSuffix:-não informado}"
-          echo -e "🏷️ TAG final ${GREEN}: $tag"
+          echo -e "📦${GREEN} Version: $version"
+          echo -e "⬅️${ColorTagPrefix} Prefix: ${versionPrefix:-n/a}"
+          echo -e "➡️${ColorTagSuffix} Suffix: ${versionSuffix:-n/a}"
+          echo -e "🏷️${GREEN} TAG final: $tag"
 
           echo "TAG=$tag" >> "$GITHUB_OUTPUT"
           echo "VERSION=$version" >> "$GITHUB_OUTPUT"
