@@ -19,11 +19,15 @@ on:
       - 'docs/**'
   workflow_call:
     inputs:
-      environment:
-        type: string
-        description: 'Environment to run the workflow'
+      build-mode:
+        description: "Build mode: Build or Build + Tag Validation"
         required: true
-        default: 'DEV'
+        type: string
+        default: Build
+      environment:
+        description: "Qual ambiente deseja fazer o deploy?"
+        type: string
+        default: DEV
       git-leaks:
         type: boolean
         description: 'Run GitLeaks'
@@ -88,7 +92,6 @@ on:
         required: true
 
 env:
-#plus
   RED: '\033[0;31m'
   GREEN: '\033[0;32m'
   YELLOW: '\033[0;33m'
