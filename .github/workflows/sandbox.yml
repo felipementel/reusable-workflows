@@ -141,14 +141,44 @@ jobs:
         id: get-version
         shell: bash
         run: |
-          version=$(sed -n 's/.*<Version>\(.*\)<\/Version>.*/\1/p' ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj)
-          
+          csproj_path="${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj"
+
+          # Extrair os valores
+          version=$(sed -n 's/.*<Version>\(.*\)<\/Version>.*/\1/p' "$csproj_path")
+          versionPrefix=$(sed -n 's/.*<VersionPrefix>\(.*\)<\/VersionPrefix>.*/\1/p' "$csproj_path")
+          versionSuffix=$(sed -n 's/.*<VersionSuffix>\(.*\)<\/VersionSuffix>.*/\1/p' "$csproj_path")
+
+          # Validar versão
           if [[ -z "$version" ]]; then
-            echo -e "${RED} Erro: A versão não foi encontrada no arquivo .csproj"
+            echo -e "${RED}❌ Erro: A tag <Version> é obrigatória no arquivo .csproj"
             exit 1
           fi
 
-          echo "TAG=$version" >> "$GITHUB_OUTPUT"
+          # Montar TAG
+          tag="$version"
+          if [[ -n "$versionPrefix" ]]; then
+            tag="${versionPrefix}-${tag}"
+            ColorTagPrefix="${GREEN}"
+          else
+            ColorTagPrefix="${YELLOW}"
+          fi
+
+          if [[ -n "$versionSuffix" ]]; then
+            tag="${tag}-${versionSuffix}"
+            ColorTagSuffix="${GREEN}"
+          else
+            ColorTagSuffix="${YELLOW}"
+          fi
+
+          echo -e "📦 ${GREEN} Version: $version"
+          echo -e "🔤 Prefix ${ColorTagPrefix}: ${versionPrefix:-não informado}"
+          echo -e "🔤 Suffix ${ColorTagSuffix}: ${versionSuffix:-não informado}"
+          echo -e "🏷️ TAG final ${GREEN}: $tag"
+
+          echo "TAG=$tag" >> "$GITHUB_OUTPUT"
+          echo "VERSION=$version" >> "$GITHUB_OUTPUT"
+          echo "VERSION_PREFIX=$versionPrefix" >> "$GITHUB_OUTPUT"
+          echo "VERSION_SUFFIX=$versionSuffix" >> "$GITHUB_OUTPUT"
       
       - name: Sys - Setup .NET version ${{ inputs.dotnetVersion }}
         uses: actions/setup-dotnet@v4
