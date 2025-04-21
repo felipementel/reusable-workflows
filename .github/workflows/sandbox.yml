@@ -140,6 +140,7 @@ jobs:
         with:
           sparse-checkout: |
             src
+            .github
             test
           sparse-checkout-cone-mode: false
 
