@@ -1,0 +1,96 @@
+name: Get Version from .csproj
+
+on:
+  workflow_call:
+    inputs:
+      projectBaseDir:
+        required: true
+        type: string
+      mainProject:
+        required: true
+        type: string
+    outputs:
+      TAG:
+        description: Tag final formatada
+        value: ${{ jobs.get-version.outputs.TAG }}
+      VERSION:
+        description: Versão principal
+        value: ${{ jobs.get-version.outputs.VERSION }}
+      VERSION_PREFIX:
+        description: Prefixo da versão
+        value: ${{ jobs.get-version.outputs.VERSION_PREFIX }}
+      VERSION_SUFFIX:
+        description: Sufixo da versão
+        value: ${{ jobs.get-version.outputs.VERSION_SUFFIX }}
+
+env:
+  RED: '\033[0;31m'
+  GREEN: '\033[0;32m'
+  YELLOW: '\033[0;33m'
+  BLUE: '\033[0;34m'
+  RESET: '\033[0m'
+  BOLD: '\033[1m'
+  UNDERLINE: '\033[4m'
+  BOLD_UNDERLINE: '\033[1;4m'
+  BOLD_RED: '\033[1;31m'
+  BOLD_GREEN: '\033[1;32m'
+  BOLD_YELLOW: '\033[1;33m'
+  BOLD_BLUE: '\033[1;34m'
+
+
+jobs:
+  get-version:
+    runs-on: ubuntu-latest
+    outputs:
+      TAG: ${{ steps.extract.outputs.TAG }}
+      VERSION: ${{ steps.extract.outputs.VERSION }}
+      VERSION_PREFIX: ${{ steps.extract.outputs.VERSION_PREFIX }}
+      VERSION_SUFFIX: ${{ steps.extract.outputs.VERSION_SUFFIX }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract version info
+        id: extract
+        shell: bash
+        run: |
+          csproj_path="${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj"
+
+          # Extrair os valores
+          version=$(sed -n 's/.*<Version>\(.*\)<\/Version>.*/\1/p' "$csproj_path")
+          versionPrefix=$(sed -n 's/.*<VersionPrefix>\(.*\)<\/VersionPrefix>.*/\1/p' "$csproj_path")
+          versionSuffix=$(sed -n 's/.*<VersionSuffix>\(.*\)<\/VersionSuffix>.*/\1/p' "$csproj_path")
+
+          # Validar versão
+          if [[ -z "$version" ]]; then
+            echo -e "${RED}❌ Erro: A tag <Version> é obrigatória no arquivo .csproj"
+            exit 1
+          fi
+
+          # Montar TAG
+          tag="$version"
+          if [[ -n "$versionPrefix" ]]; then
+            tag="${versionPrefix}-${tag}"
+            ColorTagPrefix="${GREEN}"
+          else
+            ColorTagPrefix="${YELLOW}"
+          fi
+
+          if [[ -n "$versionSuffix" ]]; then
+            tag="${tag}-${versionSuffix}"
+            ColorTagSuffix="${GREEN}"
+          else
+            ColorTagSuffix="${YELLOW}"
+          fi
+          
+          echo "::group::🔍 Informações de versão extraídas"
+          echo -e "📦${GREEN} Version: $version"
+          echo -e "⬅️${ColorTagPrefix} Prefix: ${versionPrefix:-n/a}"
+          echo -e "➡️${ColorTagSuffix} Suffix: ${versionSuffix:-n/a}"
+          echo -e "🏷️${GREEN} TAG final: $tag"
+          echo "::endgroup::"
+
+          echo "TAG=$tag" >> "$GITHUB_OUTPUT"
+          echo "VERSION=$version" >> "$GITHUB_OUTPUT"
+          echo "VERSION_PREFIX=$versionPrefix" >> "$GITHUB_OUTPUT"
+          echo "VERSION_SUFFIX=$versionSuffix" >> "$GITHUB_OUTPUT"

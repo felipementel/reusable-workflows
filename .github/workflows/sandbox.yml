@@ -98,12 +98,18 @@ on:
         required: true
         description: 'Sonar Token'
 env:
-#plus
   RED: '\033[0;31m'
   GREEN: '\033[0;32m'
   YELLOW: '\033[0;33m'
   BLUE: '\033[0;34m'
   RESET: '\033[0m'
+  BOLD: '\033[1m'
+  UNDERLINE: '\033[4m'
+  BOLD_UNDERLINE: '\033[1;4m'
+  BOLD_RED: '\033[1;31m'
+  BOLD_GREEN: '\033[1;32m'
+  BOLD_YELLOW: '\033[1;33m'
+  BOLD_BLUE: '\033[1;34m'
 
 jobs:
   build:
@@ -139,49 +145,56 @@ jobs:
 
       - name: Sys - Get-Version from csproj
         id: get-version
-        shell: bash
-        run: |
-          csproj_path="${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj"
+        uses: ./.github/workflows/steps/get-version-from-csproj.yml
+        with:
+          projectBaseDir: ./src
+          mainProject: DEPLOY.KeyCloak.API
 
-          # Extrair os valores
-          version=$(sed -n 's/.*<Version>\(.*\)<\/Version>.*/\1/p' "$csproj_path")
-          versionPrefix=$(sed -n 's/.*<VersionPrefix>\(.*\)<\/VersionPrefix>.*/\1/p' "$csproj_path")
-          versionSuffix=$(sed -n 's/.*<VersionSuffix>\(.*\)<\/VersionSuffix>.*/\1/p' "$csproj_path")
+      # - name: Sys - Get-Version from csproj
+      #   id: get-version
+      #   shell: bash
+      #   run: |
+      #     csproj_path="${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj"
 
-          # Validar versão
-          if [[ -z "$version" ]]; then
-            echo -e "${RED}❌ Erro: A tag <Version> é obrigatória no arquivo .csproj"
-            exit 1
-          fi
+      #     # Extrair os valores
+      #     version=$(sed -n 's/.*<Version>\(.*\)<\/Version>.*/\1/p' "$csproj_path")
+      #     versionPrefix=$(sed -n 's/.*<VersionPrefix>\(.*\)<\/VersionPrefix>.*/\1/p' "$csproj_path")
+      #     versionSuffix=$(sed -n 's/.*<VersionSuffix>\(.*\)<\/VersionSuffix>.*/\1/p' "$csproj_path")
 
-          # Montar TAG
-          tag="$version"
-          if [[ -n "$versionPrefix" ]]; then
-            tag="${versionPrefix}-${tag}"
-            ColorTagPrefix="${GREEN}"
-          else
-            ColorTagPrefix="${YELLOW}"
-          fi
+      #     # Validar versão
+      #     if [[ -z "$version" ]]; then
+      #       echo -e "${RED}❌ Erro: A tag <Version> é obrigatória no arquivo .csproj"
+      #       exit 1
+      #     fi
 
-          if [[ -n "$versionSuffix" ]]; then
-            tag="${tag}-${versionSuffix}"
-            ColorTagSuffix="${GREEN}"
-          else
-            ColorTagSuffix="${YELLOW}"
-          fi
-          
-          echo "::group::🔍 Informações de versão extraídas"
-          echo -e "📦${GREEN} Version: $version"
-          echo -e "⬅️${ColorTagPrefix} Prefix: ${versionPrefix:-n/a}"
-          echo -e "➡️${ColorTagSuffix} Suffix: ${versionSuffix:-n/a}"
-          echo -e "🏷️${GREEN} TAG final: $tag"
-          echo "::endgroup::"
+      #     # Montar TAG
+      #     tag="$version"
+      #     if [[ -n "$versionPrefix" ]]; then
+      #       tag="${versionPrefix}-${tag}"
+      #       ColorTagPrefix="${GREEN}"
+      #     else
+      #       ColorTagPrefix="${YELLOW}"
+      #     fi
 
-          echo "TAG=$tag" >> "$GITHUB_OUTPUT"
-          echo "VERSION=$version" >> "$GITHUB_OUTPUT"
-          echo "VERSION_PREFIX=$versionPrefix" >> "$GITHUB_OUTPUT"
-          echo "VERSION_SUFFIX=$versionSuffix" >> "$GITHUB_OUTPUT"
-      
+      #     if [[ -n "$versionSuffix" ]]; then
+      #       tag="${tag}-${versionSuffix}"
+      #       ColorTagSuffix="${GREEN}"
+      #     else
+      #       ColorTagSuffix="${YELLOW}"
+      #     fi
+
+      #     echo "::group::🔍 Informações de versão extraídas"
+      #     echo -e "📦${GREEN} Version: $version"
+      #     echo -e "⬅️${ColorTagPrefix} Prefix: ${versionPrefix:-n/a}"
+      #     echo -e "➡️${ColorTagSuffix} Suffix: ${versionSuffix:-n/a}"
+      #     echo -e "🏷️${GREEN} TAG final: $tag"
+      #     echo "::endgroup::"
+
+      #     echo "TAG=$tag" >> "$GITHUB_OUTPUT"
+      #     echo "VERSION=$version" >> "$GITHUB_OUTPUT"
+      #     echo "VERSION_PREFIX=$versionPrefix" >> "$GITHUB_OUTPUT"
+      #     echo "VERSION_SUFFIX=$versionSuffix" >> "$GITHUB_OUTPUT"
+
       - name: Sys - Setup .NET version ${{ inputs.dotnetVersion }}
         uses: actions/setup-dotnet@v4
         with:
