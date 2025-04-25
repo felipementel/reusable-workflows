@@ -257,7 +257,7 @@ jobs:
             /d:sonar.exclusions="${{ inputs.sonarExclusions || ' '}}"
           dotnet restore ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
           dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj --no-incremental
-          dotnet-coverage collect 'dotnet test ./src/' --output-format xml --output 'coverage.xml'
+          dotnet-coverage collect 'dotnet test ${{ inputs.projectBaseDir }}' --output-format xml --output 'coverage.xml'
           dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       - name: 🔐 Build and analyze (Test ⛔, Sonar ✅)
