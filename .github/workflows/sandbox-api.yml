@@ -143,11 +143,6 @@ jobs:
             .github
             test
           sparse-checkout-cone-mode: false
-
-      - name: debug
-        run: |
-          cd src
-          ls
           
       - name: Sys - Get-Version from csproj
         id: get-version
