@@ -16,6 +16,11 @@ on:
       - 'docs/**'
   workflow_call:
     inputs:
+      build-mode:
+        description: "Qual ação deseja fazer?"
+        required: true
+        default: 'Build'
+        type: string
       environment:
         type: string
         description: 'Environment to run the workflow'
@@ -336,6 +341,7 @@ jobs:
           
   check-image:
     name: Check if image exists
+    if: ${{ inputs.build-mode == 'Build + Tag Validation' }}
     environment: ${{ inputs.environment }}
     runs-on: ubuntu-latest
     outputs:
@@ -364,11 +370,11 @@ jobs:
           
   push-image:
     name: Push image to Registry
+    if: ${{ inputs.build-mode == 'Build + Tag Validation' && needs.check-image.outputs.image-exists == 'false' }}
     environment: ${{ inputs.environment }}
     # if: ${{ github.event.pull_request.merged && github.event.pull_request.state == 'closed' }}
     needs: [build, check-image]
     runs-on: ubuntu-latest
-    if: ${{ needs.check-image.outputs.image-exists == 'false' }}
     permissions:
       packages: write
       contents: read
@@ -430,6 +436,7 @@ jobs:
 
   publish:
     name: Publish
+    if: ${{ inputs.build-mode == 'Build + Tag Validation' }}
     needs: [push-image]
     environment: ${{ inputs.environment }}
     # if: ${{ github.event.pull_request.merged && github.event.pull_request.state == 'closed' }}
@@ -447,10 +454,10 @@ jobs:
           
   notify-image-exists:
     name: Notify when already image exists
+    if: ${{ inputs.build-mode == 'Build + Tag Validation' && needs.check-image.outputs.image-exists == 'true'}}
     needs: [build, check-image]
     environment: ${{ inputs.environment }}
     runs-on: ubuntu-latest
-    if: ${{ needs.check-image.outputs.image-exists == 'true' }}
     steps:
       - name: Write to workflow job summary
         run: |
