@@ -62,7 +62,7 @@ on:
         description: 'Path to SLNX file'
         required: true
         default: ./src
-      sln:
+      solutionFileName:
         type: string
         description: 'The SLNX full name. eg: DEPLOY.PROJECT.API.slnx'
         required: true
@@ -321,7 +321,7 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --sarif-file-output=snyk.sarif --file=${{ inputs.projectBaseDir }}/${{ inputs.sln }}
+          args: --sarif-file-output=snyk.sarif --file=${{ inputs.projectBaseDir }}/${{ inputs.solutionFileName }}
 
       - name: 🍵 Upload result to GitHub Code Scanning
         if: ${{ inputs.git-leaks }}
