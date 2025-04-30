@@ -267,7 +267,9 @@ jobs:
           dotnet restore ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
           dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj --no-restore --output ./outputbuild
 
-      - run: ls -r 
+      - run: |
+          cd outputbuild
+          ls -r 
       
       - name: 🎗️ Spectral
         uses: stoplightio/spectral-action@latest
