@@ -268,13 +268,13 @@ jobs:
           dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj --no-restore --output ./outputbuild
 
       - run: |
-          cd outputbuild
+          cd outputbuild/open-api
           ls -r 
       
       - name: 🎗️ Spectral
         uses: stoplightio/spectral-action@latest
         with:
-          file_glob: './outputbuild/open-api/*.json'
+          file_glob: 'outputbuild/open-api/*.json'
           spectral_ruleset: 'https://raw.githubusercontent.com/connectedcircuits/devops-api-linter/main/rules.yaml'
           #https://unpkg.com/@stoplight/spectral-owasp-ruleset  
 
