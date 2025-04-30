@@ -101,6 +101,7 @@ env:
 
 permissions:
   contents: read
+  security-events: write
   pull-requests: write
   
 jobs:
@@ -118,6 +119,7 @@ jobs:
     permissions:
       contents: read
       security-events: write
+      pull-requests: write
 
     steps:
       - name: Get Environment
