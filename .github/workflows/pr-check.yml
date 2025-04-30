@@ -295,13 +295,11 @@ jobs:
             --ruleset https://unpkg.com/@stoplight/spectral-owasp-ruleset
         continue-on-error: true
 
-      - name: Upload Spectral Lint Results to GitHub Test Summary
-        uses: actions/upload-test-results@v2
-        if: always()
+      - name: Upload Spectral Lint Results
+        uses: actions/upload-artifact@v4
         with:
-          files: spectral-*.xml
-          name: Spectral API Lint
-          format: junit
+          name: spectral-results
+          path: spectral-*.xml
 
       - name: Upload Spectral Lint Results to GitHub Test Summary
         uses: actions/upload-test-results@v2
