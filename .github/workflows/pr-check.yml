@@ -275,9 +275,41 @@ jobs:
         uses: stoplightio/spectral-action@latest
         with:
           file_glob: 'outputbuild/open-api/*.json'
-          spectral_ruleset: 'https://raw.githubusercontent.com/connectedcircuits/devops-api-linter/main/rules.yaml'
-          #https://unpkg.com/@stoplight/spectral-owasp-ruleset  
+          # spectral_ruleset: 'https://raw.githubusercontent.com/connectedcircuits/devops-api-linter/main/rules.yaml'
+          #https://unpkg.com/@stoplight/spectral-owasp-ruleset
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Spectral
+        run: npm install -g @stoplight/spectral
+
+      - name: Run Spectral Lint with custom ruleset
+        run: |
+          spectral lint \
+            --format stylish \
+            --format junit \
+            --output.junit spectral-report.xml \
+            "outputbuild/open-api/*.json" \
+            --ruleset https://raw.githubusercontent.com/connectedcircuits/devops-api-linter/main/rules.yaml
+        continue-on-error: true
+
+      - name: Upload Spectral report
+        uses: actions/upload-artifact@v4
+        with:
+          name: spectral-report
+          path: spectral-report.xml
+
+      - name: Publish test results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Spectral API Lint
+          path: spectral-report.xml
+          reporter: jest-junit
+          
       - name: 🍵 Snyk Setup
         uses: snyk/actions/setup@master
 
