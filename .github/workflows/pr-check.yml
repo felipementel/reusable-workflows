@@ -266,8 +266,17 @@ jobs:
           path: coveragereport
 
       - name: 🍵 Restore dependencies
-        run: dotnet restore ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
-
+        run: |
+          dotnet restore ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
+          dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj --no-restore --output .
+     
+      - uses: stoplightio/spectral-action@latest
+        with:
+          file_glob: 'open-api/*.json'
+          spectral_ruleset: 'https://raw.githubusercontent.com/connectedcircuits/devops-api-linter/main/rules.yaml'
+          #https://unpkg.com/@stoplight/spectral-owasp-ruleset
+          
+          
       - name: 🍵 Snyk Setup
         uses: snyk/actions/setup@master
 
