@@ -297,17 +297,10 @@ jobs:
 
       - name: Upload Spectral Lint Results
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: spectral-results
           path: spectral-*.xml
-
-      - name: Upload Spectral Lint Results to GitHub Test Summary
-        uses: actions/upload-test-results@v2
-        if: always()
-        with:
-          files: spectral-*.xml
-          name: Spectral API Lint
-          format: junit
           
       - name: 🍵 Snyk Setup
         uses: snyk/actions/setup@master
