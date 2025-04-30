@@ -267,17 +267,6 @@ jobs:
           dotnet restore ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
           dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj --no-restore --output ./outputbuild
 
-      - run: |
-          cd outputbuild/open-api
-          ls -r 
-      
-      - name: 🎗️ Spectral
-        uses: stoplightio/spectral-action@latest
-        with:
-          file_glob: 'outputbuild/open-api/*.json'
-          # spectral_ruleset: 'https://raw.githubusercontent.com/connectedcircuits/devops-api-linter/main/rules.yaml'
-          #https://unpkg.com/@stoplight/spectral-owasp-ruleset
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -296,19 +285,31 @@ jobs:
             --ruleset https://raw.githubusercontent.com/connectedcircuits/devops-api-linter/main/rules.yaml
         continue-on-error: true
 
-      - name: Upload Spectral report
-        uses: actions/upload-artifact@v4
-        with:
-          name: spectral-report
-          path: spectral-report.xml
+      - name: Run Spectral Lint with OWASP ruleset
+        run: |
+          spectral lint \
+            --format stylish \
+            --format junit \
+            --output.junit spectral-owasp.xml \
+            "outputbuild/open-api/*.json" \
+            --ruleset https://unpkg.com/@stoplight/spectral-owasp-ruleset
+        continue-on-error: true
 
-      - name: Publish test results
-        uses: dorny/test-reporter@v1
+      - name: Upload Spectral Lint Results to GitHub Test Summary
+        uses: actions/upload-test-results@v2
         if: always()
         with:
+          files: spectral-*.xml
           name: Spectral API Lint
-          path: spectral-report.xml
-          reporter: jest-junit
+          format: junit
+
+      - name: Upload Spectral Lint Results to GitHub Test Summary
+        uses: actions/upload-test-results@v2
+        if: always()
+        with:
+          files: spectral-*.xml
+          name: Spectral API Lint
+          format: junit
           
       - name: 🍵 Snyk Setup
         uses: snyk/actions/setup@master
