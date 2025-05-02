@@ -104,6 +104,10 @@ env:
   BOLD_YELLOW: '\033[1;33m'
   BOLD_BLUE: '\033[1;34m'
 
+  javaVersion: 23
+  javaDistro: zulu
+  nodeVersion: 22
+
 jobs:
   build:
     name: Build
@@ -197,11 +201,11 @@ jobs:
           GITLEAKS_ENABLE_UPLOAD_ARTIFACT: true
           GITLEAKS_NOTIFY_USER_LIST: '@felipementel'
 
-      - name: 🔐 Set up JDK 23 to use with SonarCloud
+      - name: 🔐 Set up JDK $javaDistro $javaVersion  to use with SonarCloud
         uses: actions/setup-java@v4
         with:
-          java-version: 23
-          distribution: 'zulu'
+          java-version: $javaVersion
+          distribution: $javaDistro
 
       - name: 🔐 SonarCloud packages cache
         uses: actions/cache@v4
@@ -277,7 +281,7 @@ jobs:
       - name: 🍵 Restore dependencies
         run: |
           dotnet restore ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
-          dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj --no-restore --output ./output_build
+        # dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj --no-restore --output ./output_build
 
       - name: 🍵 Snyk Setup
         uses: snyk/actions/setup@master
@@ -295,10 +299,10 @@ jobs:
         with:
           sarif_file: snyk.sarif
 
-      - name: 🎗️ Setup Node.js
+      - name: 🎗️ Setup Node.js $nodeVersion
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: $nodeVersion
 
       - name: 🎗️ Install Spectral
         run: npm install -g @stoplight/spectral
