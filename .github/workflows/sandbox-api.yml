@@ -146,7 +146,7 @@ jobs:
       - name: Get Environment
         id: get-env
         run: |
-          echo -e "${GREEN} ::warning::Environment ${{ inputs.environment }}"
+          echo -e "${GREEN} ⚠️ Environment ${{ inputs.environment }}"
           echo "NOW=$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_OUTPUT
 
       - name: Sys - Checkout
