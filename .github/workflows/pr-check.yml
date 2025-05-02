@@ -222,7 +222,8 @@ jobs:
         #if: && (steps.cache-sonar-scanner.outputs.cache-hit != 'true')
         run: |
           mkdir -p .sonar/scanner
-          dotnet tool install --global dotnet-sonarscanner --tool-path .sonar/scanner
+          dotnet tool install --global dotnet-sonarscanner 
+        #--tool-path .sonar/scanner
 
       - name: 🔐 Build and analyze (Test ✅, Sonar ✅)
         if: ${{ inputs.unitTests && inputs.sonarQube }}
