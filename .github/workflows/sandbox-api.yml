@@ -16,7 +16,7 @@ on:
       - 'docs/**'
   workflow_call:
     inputs:
-      build-mode:
+      buildMode:
         description: "Qual ação deseja fazer?"
         required: true
         default: 'Build'
@@ -26,17 +26,17 @@ on:
         description: 'Environment to run the workflow'
         required: true
         default: 'DEV'
-      git-leaks:
+      gitLeaks:
         type: boolean
         description: 'Run GitLeaks'
         required: false
         default: true
-      sonar-qube:
+      sonarQube:
         type: boolean
         description: 'Run SonarQube'
         required: false
         default: true
-      unit-tests:
+      unitTests:
         type: boolean
         description: 'Run Unit Tests'
         required: false
@@ -46,7 +46,7 @@ on:
         description: 'Snyk.io'
         required: false
         default: true
-      msg-canal-deploy:
+      msgCanalDeploy:
         type: string
         description: 'Message to be displayed in the summary'
         required: false
@@ -200,14 +200,14 @@ jobs:
           dotnet-version: ${{ inputs.dotnetVersion }}
 
       - name: 🎃 Install Coverage
-        if: ${{ inputs.unit-tests }}
+        if: ${{ inputs.unitTests }}
         run: |
           dotnet tool install --global dotnet-coverage
           dotnet tool install --global dotnet-reportgenerator-globaltool
           
       - name: 🧱 Git Leaks
         uses: gitleaks/gitleaks-action@v2
-        if: ${{ inputs.git-leaks }}
+        if: ${{ inputs.gitLeaks }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
@@ -216,7 +216,7 @@ jobs:
           GITLEAKS_NOTIFY_USER_LIST: '@felipementel'
 
       - name: 🔐 Set up JDK 23 to use with SonarCloud
-        if: ${{ inputs.sonar-qube }}
+        if: ${{ inputs.sonarQube }}
         uses: actions/setup-java@v4
         with:
           java-version: 23
@@ -224,7 +224,7 @@ jobs:
 
       - name: 🔐 SonarCloud packages cache
         uses: actions/cache@v4
-        if: ${{ inputs.sonar-qube }}
+        if: ${{ inputs.sonarQube }}
         with:
           path: ~/sonar/cache
           key: ${{ runner.os }}-sonar
@@ -232,7 +232,7 @@ jobs:
 
       - name: 🔐 SonarCloud scanner cache
         id: cache-sonar-scanner
-        if: ${{ inputs.sonar-qube }}
+        if: ${{ inputs.sonarQube }}
         uses: actions/cache@v4
         with:
           path: ./.sonar/scanner
@@ -240,14 +240,14 @@ jobs:
           restore-keys: ${{ runner.os }}-sonar-scanner
 
       - name: 🔐 SonarCloud scanner installer
-        if: ${{ inputs.sonar-qube }} #&& (steps.cache-sonar-scanner.outputs.cache-hit != 'true')
+        if: ${{ inputs.sonarQube }} #&& (steps.cache-sonar-scanner.outputs.cache-hit != 'true')
         run: |
           mkdir -p .sonar/scanner
           dotnet tool install --global dotnet-sonarscanner
         # --tool-path .sonar/scanner
 
       - name: 🔐 Build and analyze (Test ✅, Sonar ✅)
-        if: ${{ inputs.unit-tests && inputs.sonar-qube }}
+        if: ${{ inputs.unitTests && inputs.sonarQube }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -266,7 +266,7 @@ jobs:
           dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       - name: 🔐 Build and analyze (Test ⛔, Sonar ✅)
-        if: ${{ !inputs.unit-tests && inputs.sonar-qube }}
+        if: ${{ !inputs.unitTests && inputs.sonarQube }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -283,12 +283,12 @@ jobs:
           dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       - name: 🔐 Build and analyze (Test ✅, Sonar ⛔)
-        if: ${{ inputs.unit-tests && !inputs.sonar-qube }}
+        if: ${{ inputs.unitTests && !inputs.sonarQube }}
         run: |
           dotnet-coverage collect 'dotnet test ./src/' -f xml -o 'coverage.xml'
 
       - name: ReportGenerator
-        if: ${{ inputs.unit-tests }}
+        if: ${{ inputs.unitTests }}
         uses: danielpalme/ReportGenerator-GitHub-Action@5.4.5
         with:
           reports: '**/*coverage.xml'
@@ -303,7 +303,7 @@ jobs:
           toolpath: 'reportgeneratortool'
 
       - name: Upload coverage report artifact
-        if: ${{ inputs.unit-tests }}
+        if: ${{ inputs.unitTests }}
         uses: actions/upload-artifact@v4
         with:
           name: CoverageReport
@@ -361,7 +361,7 @@ jobs:
           args: --sarif-file-output=snyk.sarif --file=${{ inputs.projectBaseDir }}/${{ inputs.solutionFileName }}
 
       - name: 🍵 Upload result to GitHub Code Scanning
-        if: ${{ inputs.git-leaks }}
+        if: ${{ inputs.gitLeaks }}
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: snyk.sarif
@@ -373,12 +373,12 @@ jobs:
           | versao | data | 
           |--|--|
           | ${{ steps.get-version.outputs.tag }} | ${{ steps.get-env.outputs.now }} | \n
-          Mensagem: ${{ inputs.msg-canal-deploy }}\n'
+          Mensagem: ${{ inputs.msgCanalDeploy }}\n'
           echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
           
   check-image:
     name: Check if image exists
-    if: ${{ inputs.build-mode == 'Build + Tag Validation' }}
+    if: ${{ inputs.buildMode == 'Build + Tag Validation' }}
     environment: ${{ inputs.environment }}
     runs-on: ubuntu-latest
     outputs:
@@ -407,7 +407,7 @@ jobs:
           
   push-image:
     name: Push image to Registry
-    if: ${{ inputs.build-mode == 'Build + Tag Validation' && needs.check-image.outputs.image-exists == 'false' }}
+    if: ${{ inputs.buildMode == 'Build + Tag Validation' && needs.check-image.outputs.image-exists == 'false' }}
     environment: ${{ inputs.environment }}
     # if: ${{ github.event.pull_request.merged && github.event.pull_request.state == 'closed' }}
     needs: [build, check-image]
@@ -468,12 +468,12 @@ jobs:
           | versao | data | 
           |--|--|
           | ${{ needs.build.outputs.tag-version }} | ${{ needs.build.outputs.now }} | \n
-          Mensagem: ${{ inputs.msg-canal-deploy }}\n'
+          Mensagem: ${{ inputs.msgCanalDeploy }}\n'
           echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
 
   publish:
     name: Publish
-    if: ${{ inputs.build-mode == 'Build + Tag Validation' }}
+    if: ${{ inputs.buildMode == 'Build + Tag Validation' }}
     needs: [push-image]
     environment: ${{ inputs.environment }}
     # if: ${{ github.event.pull_request.merged && github.event.pull_request.state == 'closed' }}
@@ -486,12 +486,12 @@ jobs:
           | versao | data | 
           |--|--|
           | ${{ needs.build.outputs.tag-version }} | ${{ needs.build.outputs.now }} | \n
-          Mensagem: ${{ inputs.msg-canal-deploy }}\n'
+          Mensagem: ${{ inputs.msgCanalDeploy }}\n'
           echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
           
   notify-image-exists:
     name: Notify when already image exists
-    if: ${{ inputs.build-mode == 'Build + Tag Validation' && needs.check-image.outputs.image-exists == 'true'}}
+    if: ${{ inputs.buildMode == 'Build + Tag Validation' && needs.check-image.outputs.image-exists == 'true'}}
     needs: [build, check-image]
     environment: ${{ inputs.environment }}
     runs-on: ubuntu-latest
