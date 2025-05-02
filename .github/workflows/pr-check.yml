@@ -182,7 +182,7 @@ jobs:
         with:
           dotnet-version: ${{ inputs.dotnetVersion }}
 
-      - name: 🎃 Install Coverage
+      - name: 🧪 Install Coverage
         run: |
           dotnet tool install --global dotnet-coverage
           dotnet tool install --global dotnet-reportgenerator-globaltool
