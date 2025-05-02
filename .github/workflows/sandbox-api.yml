@@ -148,7 +148,7 @@ jobs:
             .github
             test
           sparse-checkout-cone-mode: false
-          
+
       - name: Sys - Get-Version from csproj
         id: get-version
         shell: bash
@@ -310,7 +310,44 @@ jobs:
           path: coveragereport
 
       - name: 🍵 Restore dependencies
-        run: dotnet restore ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
+        run: |
+          dotnet restore ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
+          dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj --no-restore --output ./outputbuild
+  
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Spectral
+        run: npm install -g @stoplight/spectral
+
+      - name: Run Spectral Lint with custom ruleset
+        run: |
+          spectral lint \
+            --format stylish \
+            --format junit \
+            --output.junit spectral-report.xml \
+            "outputbuild/open-api/*.json" \
+            --ruleset https://raw.githubusercontent.com/connectedcircuits/devops-api-linter/main/rules.yaml
+        continue-on-error: true
+
+      - name: Run Spectral Lint with OWASP ruleset
+        run: |
+          spectral lint \
+            --format stylish \
+            --format junit \
+            --output.junit spectral-owasp.xml \
+            "outputbuild/open-api/*.json" \
+            --ruleset https://unpkg.com/@stoplight/spectral-owasp-ruleset
+        continue-on-error: true
+
+      - name: Upload Spectral Lint Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: spectral-results
+          path: spectral-*.xml
 
       - name: 🍵 Snyk Setup
         uses: snyk/actions/setup@master

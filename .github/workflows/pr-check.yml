@@ -21,17 +21,17 @@ on:
         description: 'Environment to run the workflow'
         required: true
         default: 'DEV'
-      git-leaks:
+      gitLeaks:
         type: boolean
         description: 'Run GitLeaks'
         required: false
         default: true
-      sonar-qube:
+      sonarQube:
         type: boolean
         description: 'Run SonarQube'
         required: false
         default: true
-      unit-tests:
+      unitTests:
         type: boolean
         description: 'Run Unit Tests'
         required: false
@@ -41,7 +41,7 @@ on:
         description: 'Snyk.io'
         required: false
         default: true
-      msg-canal-deploy:
+      msgCanalDeploy:
         type: string
         description: 'Message to be displayed in the summary'
         required: false
@@ -84,6 +84,11 @@ on:
         description: 'Image name to publish at github packages'
         required: true
         default: ""
+      openAPIFolder:
+        type: string
+        description: ''
+        required: true
+        default: ""
 
 env:
   RED: '\033[0;31m'
@@ -98,7 +103,7 @@ env:
   BOLD_GREEN: '\033[1;32m'
   BOLD_YELLOW: '\033[1;33m'
   BOLD_BLUE: '\033[1;34m'
-  
+
 jobs:
   build:
     name: Build
@@ -236,7 +241,7 @@ jobs:
             /d:sonar.scanner.javaExePath=${JAVA_HOME}/bin/java \
             /d:sonar.exclusions="${{ inputs.sonarExclusions || ' '}}"
           dotnet restore ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
-          dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj --no-incremental --no-restore
+          dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj --no-incremental --no-restore  --output ./output_build
           dotnet-coverage collect 'dotnet test ${{ inputs.projectBaseDir }}/${{ inputs.solutionFileName }}' --output-format xml --output 'coverage.xml'
           dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
@@ -262,10 +267,10 @@ jobs:
           name: CoverageReport
           path: coveragereport
 
-      - name: 🍵 Restore dependencies
-        run: |
-          dotnet restore ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
-          dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj --no-restore --output ./outputbuild
+      # - name: 🍵 Restore dependencies
+      #   run: |
+      #     dotnet restore ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
+      #     dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj --no-restore --output ./outputbuild
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -281,7 +286,7 @@ jobs:
             --format stylish \
             --format junit \
             --output.junit spectral-report.xml \
-            "outputbuild/open-api/*.json" \
+            "output_build/${{ inputs.openAPIFolder }}/*.{json,yml,yaml}" \
             --ruleset https://raw.githubusercontent.com/connectedcircuits/devops-api-linter/main/rules.yaml
         continue-on-error: true
 
@@ -291,7 +296,7 @@ jobs:
             --format stylish \
             --format junit \
             --output.junit spectral-owasp.xml \
-            "outputbuild/open-api/*.json" \
+            "output_build/${{ inputs.openAPIFolder }}/*.{json,yml,yaml}" \
             --ruleset https://unpkg.com/@stoplight/spectral-owasp-ruleset
         continue-on-error: true
 
@@ -301,7 +306,7 @@ jobs:
         with:
           name: spectral-results
           path: spectral-*.xml
-          
+
       - name: 🍵 Snyk Setup
         uses: snyk/actions/setup@master
 
