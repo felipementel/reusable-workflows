@@ -276,12 +276,25 @@ jobs:
 
       - name: 🍵 Restore dependencies
         run: |
-          dotnet restore \
-            ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
-          dotnet build  
-            ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj \
-            --no-restore \
-            --output ./output_build
+          dotnet restore ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
+          dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj --no-restore --output ./output_build
+
+      - name: 🍵 Snyk Setup
+        uses: snyk/actions/setup@master
+
+      - name: 🍵 Run Snyk to check for vulnerabilities
+        uses: snyk/actions/dotnet@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --sarif-file-output=snyk.sarif \
+            --file=${{ inputs.projectBaseDir }}/${{ inputs.solutionFileName }}
+
+      - name: 🍵 Upload result to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: snyk.sarif
 
       - name: 🎗️ Setup Node.js
         uses: actions/setup-node@v4
@@ -317,23 +330,6 @@ jobs:
         with:
           name: spectral-results
           path: spectral-*.xml
-
-      - name: 🍵 Snyk Setup
-        uses: snyk/actions/setup@master
-
-      - name: 🍵 Run Snyk to check for vulnerabilities
-        uses: snyk/actions/dotnet@master
-        continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --sarif-file-output=snyk.sarif \
-            --file=${{ inputs.projectBaseDir }}/${{ inputs.solutionFileName }}
-
-      - name: 🍵 Upload result to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: snyk.sarif
 
       - name: 🧾 Write to workflow job summary
         run: |
