@@ -248,8 +248,7 @@ jobs:
           dotnet restore ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
           dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj \
             --no-incremental \
-            --no-restore \
-            --output ./output_build
+            --no-restore
           dotnet-coverage collect \
             'dotnet test ${{ inputs.projectBaseDir }}/${{ inputs.solutionFileName }}' \
             --output-format xml \
@@ -281,7 +280,7 @@ jobs:
       - name: 🍵 Restore dependencies
         run: |
           dotnet restore ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
-        # dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj --no-restore --output ./output_build
+          dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj --no-restore --output ./output_build
 
       - name: 🍵 Snyk Setup
         uses: snyk/actions/setup@master
@@ -343,7 +342,7 @@ jobs:
           | ${{ steps.get-version.outputs.tag }} | ${{ steps.get-env.outputs.now }} | \n
           Mensagem: ${{ inputs.msgCanalDeploy }}\n'
           echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
-          
+
   check-image:
     name: Check if image exists
     runs-on: ubuntu-latest
