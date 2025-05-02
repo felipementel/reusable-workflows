@@ -91,7 +91,7 @@ on:
         default: ""
       openAPIFolder:
         type: string
-        description: ''
+        description: 'Path to the folder containing OpenAPI specification files. This folder should include all necessary YAML or JSON files for API documentation.'
         required: true
         default: "open-api"
     secrets:
