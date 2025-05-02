@@ -89,6 +89,11 @@ on:
         description: 'Image name to publish at github packages'
         required: true
         default: ""
+      openAPIFolder:
+        type: string
+        description: ''
+        required: true
+        default: "open-api"
     secrets:
       SONAR_PROJECT_KEY:
         required: true
