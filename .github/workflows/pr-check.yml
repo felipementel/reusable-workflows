@@ -201,11 +201,11 @@ jobs:
           GITLEAKS_ENABLE_UPLOAD_ARTIFACT: true
           GITLEAKS_NOTIFY_USER_LIST: '@felipementel'
 
-      - name: 🔐 Set up JDK $javaDistro $javaVersion  to use with SonarCloud
+      - name: 🔐 Set up JDK ${javaDistro} ${javaVersion}  to use with SonarCloud
         uses: actions/setup-java@v4
         with:
-          java-version: $javaVersion
-          distribution: $javaDistro
+          java-version: ${javaVersion}
+          distribution: ${javaDistro}
 
       - name: 🔐 SonarCloud packages cache
         uses: actions/cache@v4
@@ -299,10 +299,10 @@ jobs:
         with:
           sarif_file: snyk.sarif
 
-      - name: 🎗️ Setup Node.js $nodeVersion
+      - name: 🎗️ Setup Node.js ${nodeVersion}
         uses: actions/setup-node@v4
         with:
-          node-version: $nodeVersion
+          node-version: ${nodeVersion}
 
       - name: 🎗️ Install Spectral
         run: npm install -g @stoplight/spectral
