@@ -246,7 +246,7 @@ jobs:
           dotnet-coverage collect 'dotnet test ${{ inputs.projectBaseDir }}/${{ inputs.solutionFileName }}' --output-format xml --output 'coverage.xml'
           dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
-      - name: ReportGenerator
+      - name: 🧪 ReportGenerator
         if: ${{ inputs.unitTests }}
         uses: danielpalme/ReportGenerator-GitHub-Action@5.4.5
         with:
@@ -261,27 +261,27 @@ jobs:
           tag: '${{ github.run_number }}_${{ github.run_id }}'
           toolpath: 'reportgeneratortool'
 
-      - name: Upload coverage report artifact
+      - name: 🧪 Upload coverage report artifact
         if: ${{ inputs.unitTests }}
         uses: actions/upload-artifact@v4
         with:
           name: CoverageReport
           path: coveragereport
 
-      # - name: 🍵 Restore dependencies
-      #   run: |
-      #     dotnet restore ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
-      #     dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj --no-restore --output ./outputbuild
+      - name: 🍵 Restore dependencies
+        run: |
+          dotnet restore ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
+          dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj --no-restore --output ./outputbuild
 
-      - name: Setup Node.js
+      - name: 🎗️ Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Install Spectral
+      - name: 🎗️ Install Spectral
         run: npm install -g @stoplight/spectral
 
-      - name: Run Spectral Lint with custom ruleset
+      - name: 🎗️ Run Spectral Lint with custom ruleset
         run: |
           spectral lint \
             --format stylish \
@@ -291,7 +291,7 @@ jobs:
             --ruleset https://raw.githubusercontent.com/connectedcircuits/devops-api-linter/main/rules.yaml
         continue-on-error: true
 
-      - name: Run Spectral Lint with OWASP ruleset
+      - name: 🎗️ Run Spectral Lint with OWASP ruleset
         run: |
           spectral lint \
             --format stylish \
@@ -301,7 +301,7 @@ jobs:
             --ruleset https://unpkg.com/@stoplight/spectral-owasp-ruleset
         continue-on-error: true
 
-      - name: Upload Spectral Lint Results
+      - name: 🎗️ Upload Spectral Lint Results
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -324,7 +324,7 @@ jobs:
         with:
           sarif_file: snyk.sarif
 
-      - name: Write to workflow job summary
+      - name: 🧾 Write to workflow job summary
         run: |
           SUMMARY=$GITHUB_STEP_SUMMARY$'
           # Versão gerada\n
@@ -368,7 +368,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ needs.check-image.outputs.image-exists == 'false' }}
     steps:
-      - name: Write to workflow job summary
+      - name: 🧾 Write to workflow job summary
         run: |
           echo "Image with tag ${{ needs.build.outputs.tag-version }} can be deployed. Push image to registry and publish on Azure Cloud." >> $GITHUB_STEP_SUMMARY
           
@@ -379,6 +379,6 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ needs.check-image.outputs.image-exists == 'true' }}
     steps:
-      - name: Write to workflow job summary
+      - name: 🧾 Write to workflow job summary
         run: |
           echo "Image with tag ${{ needs.build.outputs.tag-version }} already exists. Skipping push image to registry and publish on Azure Cloud." >> $GITHUB_STEP_SUMMARY
