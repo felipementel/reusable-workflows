@@ -31,6 +31,11 @@ on:
         description: 'Run SonarQube'
         required: false
         default: true
+      testsFolder:
+        type: string
+        description: 'Run Unit Tests'
+        required: false
+        default: './tests'
       unitTests:
         type: boolean
         description: 'Run Unit Tests'
@@ -250,7 +255,7 @@ jobs:
             --no-incremental \
             --no-restore
           rm -f coverage.xml
-          for proj in $(find ./tests -name '*.csproj'); do
+          for proj in $(find ${{ inputs.testsFolder }} -name '*.csproj'); do
             echo "➡️ Rodando testes com cobertura para: $proj"
             dotnet-coverage collect \
               "dotnet test $proj --no-build" \
