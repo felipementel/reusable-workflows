@@ -292,8 +292,6 @@ jobs:
           dotnet-coverage merge coverage-artifacts/*.cobertura.xml -o coverage.cobertura.xml
           dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
-      
-
       - name: 🔐 Build and analyze (Test ⛔, Sonar ✅)
         if: ${{ !inputs.unitTests && inputs.sonarQube }}
         env:
@@ -349,6 +347,15 @@ jobs:
         with:
           name: CoverageReport
           path: coveragereport
+
+      - name: 📦 Upload coverage reports
+        if: ${{ inputs.unitTests && inputs.sonarQube }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: |
+            coverage-artifacts/*.cobertura.xml
+            coverage.cobertura.xml
 
       - name: 🍵 Restore dependencies
         run: |
