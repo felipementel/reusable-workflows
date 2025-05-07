@@ -279,20 +279,17 @@ jobs:
           dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj \
             --no-incremental \
             --no-restore
-          rm -f coverage.xml
+          mkdir -p coverage-artifacts
+          index=0
           for proj in $(find ${{ inputs.testsFolder }} -name '*.csproj'); do
             echo "➡️ Rodando testes com cobertura para: $proj"
             dotnet-coverage collect \
-              "dotnet test $proj --no-build" \
-              --output-format xml \
-              --output temp_coverage.xml
-            if [ -f coverage.xml ]; then
-              dotnet-coverage merge coverage.xml temp_coverage.xml -o coverage.xml
-            else
-              mv temp_coverage.xml coverage.xml
-            fi
+              "dotnet test $proj --no-build --verbosity normal" \
+              --output-format cobertura \
+              --output "coverage-artifacts/coverage-$index.cobertura.xml"
+            index=$((index+1))            
           done
-          dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+          dotnet-coverage merge coverage-artifacts/*.cobertura.xml -o coverage.cobertura.xml
           dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       - name: 🔐 Build and analyze (Test ⛔, Sonar ✅)
