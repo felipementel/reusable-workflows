@@ -69,7 +69,7 @@ on:
         default: ./src
       solutionFileName:
         type: string
-        description: 'The SLNX full name. eg: DEPLOY.PROJECT.API.slnx'
+        description: 'The SLNX or SLN full name. eg: DEPLOY.PROJECT.API.slnx'
         required: true
         default: ""
       mainProject:
@@ -326,27 +326,27 @@ jobs:
           done
           dotnet-coverage merge coverage-artifacts/*.cobertura.xml -o coverage.cobertura.xml
 
-      - name: 🧪 ReportGenerator
-        if: ${{ inputs.unitTests }}
-        uses: danielpalme/ReportGenerator-GitHub-Action@5.4.5
-        with:
-          reports: 'coverage.cobertura.xml'
-          targetdir: 'coveragereport'
-          reporttypes: 'HtmlInline;Cobertura'
-          assemblyfilters: '+*'
-          classfilters: '-*.Migrations.*'
-          filefilters: '+*'
-          verbosity: 'Verbose'
-          title: ${{ inputs.reportTitle }}
-          tag: '${{ github.run_number }}_${{ github.run_id }}'
-          toolpath: 'reportgeneratortool'
+      # - name: 🧪 ReportGenerator
+      #   if: ${{ inputs.unitTests }}
+      #   uses: danielpalme/ReportGenerator-GitHub-Action@5.4.5
+      #   with:
+      #     reports: 'coverage.cobertura.xml'
+      #     targetdir: 'coveragereport'
+      #     reporttypes: 'HtmlInline;Cobertura'
+      #     assemblyfilters: '+*'
+      #     classfilters: '-*.Migrations.*'
+      #     filefilters: '+*'
+      #     verbosity: 'Verbose'
+      #     title: ${{ inputs.reportTitle }}
+      #     tag: '${{ github.run_number }}_${{ github.run_id }}'
+      #     toolpath: 'reportgeneratortool'
 
-      - name: 🧪 Upload coverage report artifact
-        if: ${{ inputs.unitTests }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: CoverageReport
-          path: coveragereport
+      # - name: 🧪 Upload coverage report artifact
+      #   if: ${{ inputs.unitTests }}
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: CoverageReport
+      #     path: coveragereport
 
       - name: 📦 Upload coverage reports
         if: ${{ inputs.unitTests && inputs.sonarQube }}
@@ -355,7 +355,7 @@ jobs:
           name: coverage-reports
           path: |
             coverage-artifacts/*.cobertura.xml
-            coverage.cobertura.xml
+          #coverage.cobertura.xml
 
       - name: 🍵 Restore dependencies
         run: |
