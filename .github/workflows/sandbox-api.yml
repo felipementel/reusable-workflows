@@ -159,7 +159,7 @@ jobs:
         with:
           sparse-checkout: |
             src
-            test
+            tests
           sparse-checkout-cone-mode: false
 
       - name: Sys - Get-Version from csproj
