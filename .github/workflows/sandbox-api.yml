@@ -222,7 +222,7 @@ jobs:
         run: |
           sudo apt-get update -y
           sudo apt-get install -y libc6 libxml2
-          
+
       - name: 🧱 Git Leaks
         uses: gitleaks/gitleaks-action@v2
         if: ${{ inputs.gitLeaks }}
@@ -324,7 +324,7 @@ jobs:
           for proj in $(find ${{ inputs.testsFolder }} -name '*.csproj'); do
             echo "➡️ Rodando testes com cobertura para: $proj"
             dotnet-coverage collect \
-              "dotnet test $proj --no-build --verbosity normal" \
+              "dotnet test $proj --no-build --configuration Debug --verbosity normal" \
               --output-format cobertura \
               --output "coverage-artifacts/coverage-$index.cobertura.xml"
             index=$((index+1))
