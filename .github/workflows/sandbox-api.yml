@@ -218,6 +218,11 @@ jobs:
           dotnet tool install --global dotnet-coverage
           dotnet tool install --global dotnet-reportgenerator-globaltool
 
+      - name: 🛠️ Install system dependencies for coverage
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y libc6 libxml2
+          
       - name: 🧱 Git Leaks
         uses: gitleaks/gitleaks-action@v2
         if: ${{ inputs.gitLeaks }}
