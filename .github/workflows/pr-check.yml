@@ -33,7 +33,7 @@ on:
         default: true
       testsFolder:
         type: string
-        description: 'Run Unit Tests'
+        description: 'The main test folder'
         required: false
         default: './tests'
       unitTests:
