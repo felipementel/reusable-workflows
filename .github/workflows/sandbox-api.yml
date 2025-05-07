@@ -212,6 +212,11 @@ jobs:
         with:
           dotnet-version: ${{ inputs.dotnetVersion }}
 
+      - name: ✅ Check .NET version in use
+        run: |
+          echo "DOTNET_ROOT: $DOTNET_ROOT"
+          $DOTNET_ROOT/dotnet --info
+
       - name: 🧪 Install Coverage
         if: ${{ inputs.unitTests }}
         run: |
