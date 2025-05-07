@@ -249,12 +249,8 @@ jobs:
           dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj \
             --no-incremental \
             --no-restore
-          dotnet-coverage collect \
-            'dotnet test ${{ inputs.projectBaseDir }}/${{ inputs.solutionFileName }}' \
-            --output-format xml \
-            --output 'coverage.xml'
           rm -f coverage.xml
-          for proj in $(find ${{ inputs.projectBaseDir }}/tests -name '*.csproj'); do
+          for proj in $(find ./tests -name '*.csproj'); do
             echo "➡️ Rodando testes com cobertura para: $proj"
             dotnet-coverage collect \
               "dotnet test $proj --no-build" \
