@@ -133,7 +133,7 @@ jobs:
         with:
           sparse-checkout: |
             src
-            test
+            tests
           sparse-checkout-cone-mode: false
 
       - name: Sys - Get-Version from csproj
@@ -253,6 +253,19 @@ jobs:
             'dotnet test ${{ inputs.projectBaseDir }}/${{ inputs.solutionFileName }}' \
             --output-format xml \
             --output 'coverage.xml'
+          rm -f coverage.xml
+          for proj in $(find ${{ inputs.projectBaseDir }}/tests -name '*.csproj'); do
+            echo "➡️ Rodando testes com cobertura para: $proj"
+            dotnet-coverage collect \
+              "dotnet test $proj --no-build" \
+              --output-format xml \
+              --output temp_coverage.xml
+            if [ -f coverage.xml ]; then
+              dotnet-coverage merge coverage.xml temp_coverage.xml -o coverage.xml
+            else
+              mv temp_coverage.xml coverage.xml
+            fi
+          done
           dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       - name: 🧪 ReportGenerator
