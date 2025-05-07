@@ -292,6 +292,8 @@ jobs:
           dotnet-coverage merge coverage-artifacts/*.cobertura.xml -o coverage.cobertura.xml
           dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
+      
+
       - name: 🔐 Build and analyze (Test ⛔, Sonar ✅)
         if: ${{ !inputs.unitTests && inputs.sonarQube }}
         env:
@@ -331,7 +333,7 @@ jobs:
         uses: danielpalme/ReportGenerator-GitHub-Action@5.4.5
         with:
           reports: 'coverage.cobertura.xml'
-          targetdir: 'CoverageReport'
+          targetdir: 'coveragereport'
           reporttypes: 'HtmlInline;Cobertura'
           assemblyfilters: '+*'
           classfilters: '-*.Migrations.*'
@@ -346,7 +348,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: CoverageReport
-          path: CoverageReport
+          path: coveragereport
 
       - name: 🍵 Restore dependencies
         run: |
