@@ -21,6 +21,11 @@ on:
         description: 'Environment to run the workflow'
         required: true
         default: 'DEV'
+      testsFolder:
+        type: string
+        description: 'The main test folder'
+        required: false
+        default: './tests'
       msgCanalDeploy:
         type: string
         description: 'Message to be displayed in the summary'
