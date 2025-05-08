@@ -271,7 +271,7 @@ jobs:
           sudo usermod -aG docker $USER
           docker --version
 
-      - name: 🧪 Run tests and generate coverage (Test ✅, Sonar ⛔)
+      - name: 🧪 Run tests and generate coverage (Test ✅)
         if: ${{ inputs.unitTests }}
         run: |
           index=0
@@ -289,6 +289,13 @@ jobs:
             -reportTypes:"Cobertura;Html;MarkdownSummaryGithub" \
             -title:${{ inputs.reportTitle }} \
             -tag:'${{ github.run_number }}_${{ github.run_id }}'
+            
+      - name: 🧪 Upload coverage report artifact
+        if: ${{ inputs.unitTests }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: CoverageReport
+          path: coveragereport
 
       - name: 🗜️ Unzip coverage report (if zipped)
         run: |
@@ -351,13 +358,6 @@ jobs:
       #     title: ${{ inputs.reportTitle }}
       #     tag: '${{ github.run_number }}_${{ github.run_id }}'
       #     toolpath: 'reportgeneratortool'
-
-      - name: 🧪 Upload coverage report artifact
-        if: ${{ inputs.unitTests }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: CoverageReport
-          path: coveragereport
 
       - name: 🍵 Restore dependencies
         run: |
