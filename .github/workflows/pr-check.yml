@@ -255,7 +255,9 @@ jobs:
           reportgenerator \
             -reports:"**/TestResults/**/coverage.cobertura.xml" \
             -targetdir:"coveragereport" \
-            -reportTypes:"Html;Cobertura;MarkdownSummaryGithub"
+            -reportTypes:"Html;Cobertura;MarkdownSummaryGithub" \
+            -title:${{ inputs.reportTitle }} \
+            -tag:'${{ github.run_number }}_${{ github.run_id }}'
           dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       # - name: 🧪 ReportGenerator
