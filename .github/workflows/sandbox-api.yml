@@ -276,21 +276,6 @@ jobs:
       - name: 🧪 Run tests and generate coverage (Test ✅)
         if: ${{ inputs.unitTests }}
         run: |
-          index=0
-          coverageFiles=""
-          for proj in $(find ${{ inputs.testsFolder }} -name '*.csproj'); do
-            echo -e "${GREEN}➡️ Rodando testes com cobertura para: $proj"
-            dotnet-coverage collect "dotnet test $proj --no-build --configuration Debug" \
-              --output-format xml \
-              --output "coverage-$index.xml"
-            coverageFiles="$coverageFiles coverage-$index.xml"
-            index=$((index+1))
-          done
-
-          echo -e "${YELLOW}➡️ Mesclando arquivos de cobertura..."
-          dotnet-coverage merge -f xml -o coverage-merged.xml \
-            $coverageFiles
-
           for proj in $(find ${{ inputs.testsFolder }} -name '*.csproj'); do
             echo "➡️ Rodando testes com cobertura para: $proj"
             dotnet test $proj \
@@ -335,6 +320,20 @@ jobs:
           dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj \
             --no-incremental \
             --no-restore
+          index=0
+          coverageFiles=""
+          for proj in $(find ${{ inputs.testsFolder }} -name '*.csproj'); do
+            echo -e "${GREEN}➡️ Rodando testes com cobertura para: $proj"
+            dotnet-coverage collect "dotnet test $proj --no-build --configuration Debug" \
+              --output-format xml \
+              --output "coverage-$index.xml"
+            coverageFiles="$coverageFiles coverage-$index.xml"
+            index=$((index+1))
+          done
+
+          echo -e "${YELLOW}➡️ Mesclando arquivos de cobertura..."
+          dotnet-coverage merge --output-format xml --output coverage-merged.xml \
+            $coverageFiles
           dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       - name: 🔐 Build, analyze and not use coverage (Test ⛔, Sonar ✅)
