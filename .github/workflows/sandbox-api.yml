@@ -282,8 +282,8 @@ jobs:
                 --verbosity Minimal \
                 --configuration Debug \
                 --collect:\"XPlat Code Coverage\""
-              -f xml \
-              -o "coverage-$index.xml"
+            --output-format xml \
+            --output "coverage-$index.xml"
             index=$((index+1))
             dotnet-coverage merge -f xml -o coverage-merged.xml \
             coverage-0.xml coverage-1.xml
