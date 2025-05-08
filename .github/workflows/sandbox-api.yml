@@ -319,7 +319,7 @@ jobs:
           dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj \
             --no-incremental \
             --no-restore
-          echo -e "${GREEN}➡️ Rodando testes com cobertura para: $proj"
+          echo -e "${GREEN}➡️ Rodando testes com cobertura para o SonarQube"
           dotnet-coverage collect "dotnet test ${{ inputs.projectBaseDir }}/${{ inputs.solutionFileName }} \
                                      --no-build \
                                      --configuration Debug" \
