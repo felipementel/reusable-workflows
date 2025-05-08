@@ -266,7 +266,7 @@ jobs:
       - name: Set up Docker
         run: |
           sudo apt-get update
-          sudo url -fsSL https://get.docker.com -o install-docker.sh
+          sudo curl -fsSL https://get.docker.com -o install-docker.sh
           sudo sudo sh install-docker.sh
           sudo usermod -aG docker $USER
           docker --version
