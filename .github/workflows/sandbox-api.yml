@@ -319,20 +319,10 @@ jobs:
           dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj \
             --no-incremental \
             --no-restore
-          index=0
-          coverageFiles=""
-          for proj in $(find ${{ inputs.testsFolder }} -name '*.csproj'); do
-            echo -e "${GREEN}➡️ Rodando testes com cobertura para: $proj"
-            dotnet-coverage collect "dotnet test $proj --no-build --configuration Debug" \
-              --output-format xml \
-              --output "coverage-$index.xml"
-            coverageFiles="$coverageFiles coverage-$index.xml"
-            index=$((index+1))
-          done
-
-          echo -e "${YELLOW}➡️ Mesclando arquivos de cobertura..."
-          dotnet-coverage merge --output-format xml --output coverage-merged.xml \
-            $coverageFiles
+          echo -e "${GREEN}➡️ Rodando testes com cobertura para: $proj"
+          dotnet-coverage collect "dotnet test ${{ inputs.projectBaseDir }}/${{ inputs.solutionFileName } --no-build --configuration Debug" \
+            --output-format xml \
+            --output "coverage-$index.xml"
           dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       - name: 🔐 Build, analyze and not use coverage (Test ⛔, Sonar ✅)
