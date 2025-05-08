@@ -218,7 +218,6 @@ jobs:
           $DOTNET_ROOT/dotnet --info        
 
       - name: 🧪 Install dotnet-reportgenerator-globaltool and dotnet-coverage
-
         if: ${{ inputs.unitTests }}
         run: |
           dotnet tool install --global dotnet-reportgenerator-globaltool
