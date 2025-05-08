@@ -272,7 +272,7 @@ jobs:
           docker --version
 
       - name: 🧪 Run tests and generate coverage (Test ✅, Sonar ⛔)
-        if: ${{ inputs.unitTests && !inputs.sonarQube }}
+        if: ${{ inputs.unitTests }}
         run: |
           index=0
           for proj in $(find ${{ inputs.testsFolder }} -name '*.csproj'); do
