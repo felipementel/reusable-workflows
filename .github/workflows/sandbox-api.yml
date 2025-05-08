@@ -263,6 +263,14 @@ jobs:
           dotnet tool install --global dotnet-sonarscanner 
         #--tool-path .sonar/scanner
 
+      - name: Set up Docker
+        run: |
+          sudo apt-get update
+          sudo url -fsSL https://get.docker.com -o install-docker.sh
+          sudo sudo sh install-docker.sh
+          sudo usermod -aG docker $USER
+          docker --version
+
       - name: 🔐 Build and analyze (Test ✅, Sonar ✅)
         if: ${{ inputs.unitTests && inputs.sonarQube }}
         env:
