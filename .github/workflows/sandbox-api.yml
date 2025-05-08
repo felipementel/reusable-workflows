@@ -290,10 +290,19 @@ jobs:
           echo -e "${YELLOW}➡️ Mesclando arquivos de cobertura..."
           dotnet-coverage merge -f xml -o coverage-merged.xml \
             $coverageFiles
+
+          for proj in $(find ${{ inputs.testsFolder }} -name '*.csproj'); do
+            echo "➡️ Rodando testes com cobertura para: $proj"
+            dotnet test $proj \
+                --verbosity Minimal \
+                --configuration Debug \
+                --collect:"XPlat Code Coverage"
+            index=$((index+1))
+          done
             
           echo -e "${YELLOW}➡️ Gerando relatório HTML e Cobertura..."
           reportgenerator \
-            -reports:"*/**/coverage-merged.xml" \
+            -reports:"**/TestResults/**/coverage.cobertura.xml" \
             -targetdir:"coveragereport" \
             -reportTypes:"Cobertura;Html;MarkdownSummaryGithub;SonarQube" \
             -title:${{ inputs.reportTitle }} \
