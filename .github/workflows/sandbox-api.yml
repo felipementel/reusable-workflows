@@ -320,7 +320,9 @@ jobs:
             --no-incremental \
             --no-restore
           echo -e "${GREEN}➡️ Rodando testes com cobertura para: $proj"
-          dotnet-coverage collect "dotnet test ${{ inputs.projectBaseDir }}/${{ inputs.solutionFileName } --no-build --configuration Debug" \
+          dotnet-coverage collect "dotnet test ${{ inputs.projectBaseDir }}/${{ inputs.solutionFileName }} \
+                                     --no-build \
+                                     --configuration Debug" \
             --output-format xml \
             --output "coverage-$index.xml"
           dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
