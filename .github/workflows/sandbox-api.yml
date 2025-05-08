@@ -286,7 +286,7 @@ jobs:
           reportgenerator \
             -reports:"**/TestResults/**/coverage.cobertura.xml" \
             -targetdir:"coveragereport" \
-            -reportTypes:"Cobertura;Html;MarkdownSummaryGithub" \
+            -reportTypes:"Cobertura;Html;MarkdownSummaryGithub;SonarQube" \
             -title:${{ inputs.reportTitle }} \
             -tag:'${{ github.run_number }}_${{ github.run_id }}'
             
@@ -314,7 +314,7 @@ jobs:
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
             /d:sonar.host.url="https://sonarcloud.io" \
             /d:sonar.scanner.scanAll=false \
-            /d:sonar.cs.vscoveragexml.reportsPaths=**/coveragereport/Cobertura.xml \
+            /d:sonar.cs.vscoveragexml.reportsPaths=**/coveragereport/SonarQube.xml \
             /d:sonar.scanner.skipJreProvisioning=true \
             /d:sonar.scanner.javaExePath=${JAVA_HOME}/bin/java \
             /d:sonar.exclusions="${{ inputs.sonarExclusions || ' '}}"
