@@ -293,7 +293,7 @@ jobs:
             
           echo -e "${YELLOW}➡️ Gerando relatório HTML e Cobertura..."
           reportgenerator \
-            -reports:"**/TestResults/**/coverage.cobertura.xml" \
+            -reports:"*/**/coverage.xml" \
             -targetdir:"coveragereport" \
             -reportTypes:"Cobertura;Html;MarkdownSummaryGithub;SonarQube" \
             -title:${{ inputs.reportTitle }} \
