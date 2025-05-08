@@ -217,20 +217,35 @@ jobs:
           echo "DOTNET_ROOT: $DOTNET_ROOT"
           $DOTNET_ROOT/dotnet --info
 
-      - name: 📝 Create global.json with installed SDK version
+      - name: 🔧 Remove .NET 8 and ensure .NET 9 is installed
         run: |
+          # Remover o .NET 8 (SDK e Runtime)
+          echo "Removendo .NET 8 SDK e Runtime..."
+          sudo apt-get remove --purge -y dotnet-sdk-8.0 dotnet-runtime-8.0
+          
+          # Verificar se a versão 8 foi removida
+          echo "Verificando as versões do .NET..."
+          ls /usr/share/dotnet
+          
+          # Verificar qual versão do SDK está ativa após a remoção
+          echo "Versão do .NET instalada:"
+          dotnet --info
+          
+          # Criar ou atualizar o arquivo global.json para garantir a versão 9
           sdkVersion=$($DOTNET_ROOT/dotnet --info | grep '^ Version:' | head -n1 | awk '{print $2}')
           echo "Detected .NET SDK version: $sdkVersion"
           
-          cat <<EOF > tests/global.json
+          cat <<EOF > global.json
           {
             "sdk": {
               "version": "$sdkVersion"
             }
           }
           EOF
-      
-          cat tests/global.json
+          
+          # Exibir o conteúdo do arquivo global.json
+          cat global.json
+        
 
       - name: 🧪 Install Coverage
         if: ${{ inputs.unitTests }}
