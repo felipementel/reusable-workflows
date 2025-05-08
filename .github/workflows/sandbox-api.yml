@@ -277,11 +277,16 @@ jobs:
           index=0
           for proj in $(find ${{ inputs.testsFolder }} -name '*.csproj'); do
             echo "➡️ Rodando testes com cobertura para: $proj"
-            dotnet test $proj \
+            dotnet-coverage collect "
+              dotnet test $proj \
                 --verbosity Minimal \
                 --configuration Debug \
-                --collect:"XPlat Code Coverage"
+                --collect:\"XPlat Code Coverage\""
+              -f xml \
+              -o "coverage-$index.xml"
             index=$((index+1))
+            dotnet-coverage merge -f xml -o coverage-merged.xml \
+            coverage-0.xml coverage-1.xml
           done
           reportgenerator \
             -reports:"**/TestResults/**/coverage.cobertura.xml" \
@@ -296,11 +301,6 @@ jobs:
         with:
           name: CoverageReport
           path: coveragereport
-
-      - name: 🧐 Verificar cobertura.xml
-        run: |
-          ls -lh coveragereport
-          cat coveragereport/Cobertura.xml | head -n 20
           
       - name: 🔐 Build, analyze and use coverage (Test ✅, Sonar ✅)
         if: ${{ inputs.unitTests && inputs.sonarQube }}
@@ -314,7 +314,7 @@ jobs:
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
             /d:sonar.host.url="https://sonarcloud.io" \
             /d:sonar.scanner.scanAll=false \
-            /d:sonar.cs.vscoveragexml.reportsPaths=**/TestResults/**/coverage.cobertura.xml \
+            /d:sonar.cs.vscoveragexml.reportsPaths=coverage-merged.xml \
             /d:sonar.scanner.skipJreProvisioning=true \
             /d:sonar.scanner.javaExePath=${JAVA_HOME}/bin/java \
             /d:sonar.exclusions="${{ inputs.sonarExclusions || ' '}}"
