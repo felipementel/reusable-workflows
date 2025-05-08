@@ -247,8 +247,8 @@ jobs:
           for proj in $(find ${{ inputs.testsFolder }} -name '*.csproj'); do
             echo "➡️ Rodando testes com cobertura para: $proj"
             dotnet test $proj --verbosity Minimal \
-                --configuration Debug/
-                --results-directory ../TestResults \
+                --configuration Debug \
+                --results-directory ../TestResults/ \
                 --collect:"XPlat Code Coverage"
             index=$((index+1))
           done
