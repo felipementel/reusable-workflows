@@ -287,9 +287,9 @@ jobs:
             --output-format xml \
             --output "coverage-$index.xml"
             index=$((index+1))
-            dotnet-coverage merge -f xml -o coverage-merged.xml \
-            coverage-0.xml coverage-1.xml
           done
+          dotnet-coverage merge -f xml -o coverage-merged.xml \
+            coverage-0.xml coverage-1.xml
           reportgenerator \
             -reports:"**/TestResults/**/coverage.cobertura.xml" \
             -targetdir:"coveragereport" \
