@@ -311,7 +311,7 @@ jobs:
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
             /d:sonar.host.url="https://sonarcloud.io" \
             /d:sonar.scanner.scanAll=false \
-            /d:sonar.cs.vscoveragexml.reportsPaths=coverage-merged.xml \
+            /d:sonar.cs.vscoveragexml.reportsPaths=coverage*.xml \
             /d:sonar.scanner.skipJreProvisioning=true \
             /d:sonar.scanner.javaExePath=${JAVA_HOME}/bin/java \
             /d:sonar.exclusions="${{ inputs.sonarExclusions || ' '}}"
@@ -324,7 +324,7 @@ jobs:
                                      --no-build \
                                      --configuration Debug" \
             --output-format xml \
-            --output "coverage-$index.xml"
+            --output "coverage.xml"
           dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       - name: 🔐 Build, analyze and not use coverage (Test ⛔, Sonar ✅)
