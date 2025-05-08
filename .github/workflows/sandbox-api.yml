@@ -283,7 +283,7 @@ jobs:
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
             /d:sonar.host.url="https://sonarcloud.io" \
             /d:sonar.scanner.scanAll=false \
-            /d:sonar.cs.vscoveragexml.reportsPaths=coverage.cobertura.xml \
+            /d:sonar.cs.vscoveragexml.reportsPaths=**/coveragereport/Cobertura.xml \
             /d:sonar.scanner.skipJreProvisioning=true \
             /d:sonar.scanner.javaExePath=${JAVA_HOME}/bin/java \
             /d:sonar.exclusions="${{ inputs.sonarExclusions || ' '}}"
@@ -294,11 +294,18 @@ jobs:
           index=0
           for proj in $(find ${{ inputs.testsFolder }} -name '*.csproj'); do
             echo "➡️ Rodando testes com cobertura para: $proj"
-            dotnet test $proj --verbosity Minimal \
+            dotnet test $proj \
+                --verbosity Minimal \
+                --configuration Debug \
                 --collect:"XPlat Code Coverage"
             index=$((index+1))
           done
-          reportgenerator -reports:"**\TestResults\**\coverage.cobertura.xml" -targetdir:"coveragereport" -reportTypes:"Html"
+          reportgenerator \
+            -reports:"**/TestResults/**/coverage.cobertura.xml" \
+            -targetdir:"coveragereport" \
+            -reportTypes:"Html;Cobertura;MarkdownSummaryGithub" \
+            -title:${{ inputs.reportTitle }} \
+            -tag:'${{ github.run_number }}_${{ github.run_id }}'
           dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       - name: 🔐 Build and analyze (Test ⛔, Sonar ✅)
@@ -326,27 +333,34 @@ jobs:
           index=0
           for proj in $(find ${{ inputs.testsFolder }} -name '*.csproj'); do
             echo "➡️ Rodando testes com cobertura para: $proj"
-            dotnet test $proj --verbosity Minimal \
+            dotnet test $proj \
+                --verbosity Minimal \
+                --configuration Debug \
                 --collect:"XPlat Code Coverage"
             index=$((index+1))
           done
-          reportgenerator -reports:"**\TestResults\**\coverage.cobertura.xml" -targetdir:"coveragereport" -reportTypes:"Html"
+          reportgenerator \
+            -reports:"**/TestResults/**/coverage.cobertura.xml" \
+            -targetdir:"coveragereport" \
+            -reportTypes:"Html;Cobertura;MarkdownSummaryGithub" \
+            -title:${{ inputs.reportTitle }} \
+            -tag:'${{ github.run_number }}_${{ github.run_id }}'
 
 
-      - name: 🧪 ReportGenerator
-        if: ${{ inputs.unitTests }}
-        uses: danielpalme/ReportGenerator-GitHub-Action@5.4.5
-        with:
-          reports: 'coverage.cobertura.xml'
-          targetdir: 'coveragereport'
-          reporttypes: 'HtmlInline;Cobertura'
-          assemblyfilters: '+*'
-          classfilters: '-*.Migrations.*'
-          filefilters: '+*'
-          verbosity: 'Verbose'
-          title: ${{ inputs.reportTitle }}
-          tag: '${{ github.run_number }}_${{ github.run_id }}'
-          toolpath: 'reportgeneratortool'
+      # - name: 🧪 ReportGenerator
+      #   uses: danielpalme/ReportGenerator-GitHub-Action@5.4.5
+      #   with:
+      #     #reports: '**/*coverage.xml'
+      #     reports: 'coverage.cobertura.xml'
+      #     targetdir: 'coveragereport'
+      #     reporttypes: 'HtmlInline;Cobertura'
+      #     assemblyfilters: '+*'
+      #     classfilters: '-*.Migrations.*'
+      #     filefilters: '+*'
+      #     verbosity: 'Verbose'
+      #     title: ${{ inputs.reportTitle }}
+      #     tag: '${{ github.run_number }}_${{ github.run_id }}'
+      #     toolpath: 'reportgeneratortool'
 
       - name: 🧪 Upload coverage report artifact
         if: ${{ inputs.unitTests }}
@@ -358,7 +372,9 @@ jobs:
       - name: 🍵 Restore dependencies
         run: |
           dotnet restore ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
-          dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj --no-restore --output ./output_build
+          dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj \
+            --no-restore \
+            --output ./output_build
 
       - name: 🍵 Snyk Setup
         uses: snyk/actions/setup@master
