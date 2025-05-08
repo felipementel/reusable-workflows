@@ -190,15 +190,17 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ inputs.dotnetVersion }}
-
-      - name: 🧪 Install Coverage
+      - name: ✅ Check .NET version in use
         run: |
-          dotnet tool install --global dotnet-coverage
+          echo "DOTNET_ROOT: $DOTNET_ROOT"
+          $DOTNET_ROOT/dotnet --info        
+
+      - name: 🧪 Install dotnet-reportgenerator-globaltool
+        run: |
           dotnet tool install --global dotnet-reportgenerator-globaltool
-          
+
       - name: 🧱 Git Leaks
         uses: gitleaks/gitleaks-action@v2
-        if: ${{ inputs.gitLeaks }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
@@ -228,14 +230,20 @@ jobs:
           restore-keys: ${{ runner.os }}-sonar-scanner
 
       - name: 🔐 SonarCloud scanner installer
-        #if: && (steps.cache-sonar-scanner.outputs.cache-hit != 'true')
         run: |
           mkdir -p .sonar/scanner
           dotnet tool install --global dotnet-sonarscanner 
         #--tool-path .sonar/scanner
 
+      - name: Set up Docker
+        run: |
+          sudo apt-get update
+          sudo curl -fsSL https://get.docker.com -o install-docker.sh
+          sudo sh install-docker.sh
+          sudo usermod -aG docker $USER
+          docker --version
+
       - name: 🔐 Build and analyze (Test ✅, Sonar ✅)
-        if: ${{ inputs.unitTests && inputs.sonarQube }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -265,7 +273,6 @@ jobs:
           dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       - name: 🧪 ReportGenerator
-        if: ${{ inputs.unitTests }}
         uses: danielpalme/ReportGenerator-GitHub-Action@5.4.5
         with:
           #reports: '**/*coverage.xml'
@@ -281,7 +288,6 @@ jobs:
           toolpath: 'reportgeneratortool'
 
       - name: 🧪 Upload coverage report artifact
-        if: ${{ inputs.unitTests }}
         uses: actions/upload-artifact@v4
         with:
           name: CoverageReport
