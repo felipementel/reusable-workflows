@@ -277,19 +277,21 @@ jobs:
         if: ${{ inputs.unitTests }}
         run: |
           index=0
+          coverageFiles=""
           for proj in $(find ${{ inputs.testsFolder }} -name '*.csproj'); do
-            echo "➡️ Rodando testes com cobertura para: $proj"
-            dotnet-coverage collect "
-              dotnet test $proj \
-                --verbosity Minimal \
-                --configuration Debug \
-                --collect:\"XPlat Code Coverage\""
-            --output-format xml \
-            --output "coverage-$index.xml"
+            echo -e "${GREEN}➡️ Rodando testes com cobertura para: $proj"
+            dotnet-coverage collect "dotnet test $proj --no-build --configuration Debug" \
+              --output-format xml \
+              --output "coverage-$index.xml"
+            coverageFiles="$coverageFiles coverage-$index.xml"
             index=$((index+1))
           done
+
+          echo -e "${YELLOW}➡️ Mesclando arquivos de cobertura..."
           dotnet-coverage merge -f xml -o coverage-merged.xml \
-            coverage-0.xml coverage-1.xml
+            $coverageFiles
+            
+          echo -e "${YELLOW}➡️ Gerando relatório HTML e Cobertura..."
           reportgenerator \
             -reports:"**/TestResults/**/coverage.cobertura.xml" \
             -targetdir:"coveragereport" \
