@@ -254,17 +254,14 @@ jobs:
           dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj \
             --no-incremental \
             --no-restore
-          mkdir -p coverage-artifacts
           index=0
           for proj in $(find ${{ inputs.testsFolder }} -name '*.csproj'); do
             echo "➡️ Rodando testes com cobertura para: $proj"
-            dotnet-coverage collect \
-              "dotnet test $proj --no-build --verbosity normal" \
-              --output-format cobertura \
-              --output "coverage-artifacts/coverage-$index.cobertura.xml"
-            index=$((index+1))            
+            dotnet test $proj --verbosity Minimal \
+                --collect:"XPlat Code Coverage"
+            index=$((index+1))
           done
-          dotnet-coverage merge coverage-artifacts/*.cobertura.xml -o coverage.cobertura.xml
+          reportgenerator -reports:"**\TestResults\**\coverage.cobertura.xml" -targetdir:"coveragereport" -reportTypes:"Html"
           dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       - name: 🧪 ReportGenerator
@@ -273,7 +270,7 @@ jobs:
         with:
           #reports: '**/*coverage.xml'
           reports: 'coverage.cobertura.xml'
-          targetdir: 'CoverageReport'
+          targetdir: 'coveragereport'
           reporttypes: 'HtmlInline;Cobertura'
           assemblyfilters: '+*'
           classfilters: '-*.Migrations.*'
@@ -344,7 +341,8 @@ jobs:
         if: always()
         with:
           name: spectral-results
-          path: spectral-*.xml
+          path: |
+            spectral-*.xml
 
       - name: 🧾 Write to workflow job summary
         run: |

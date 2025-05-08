@@ -217,7 +217,7 @@ jobs:
           echo "DOTNET_ROOT: $DOTNET_ROOT"
           $DOTNET_ROOT/dotnet --info        
 
-      - name: 🧪 Install Coverage
+      - name: 🧪 Install dotnet-reportgenerator-globaltool
         if: ${{ inputs.unitTests }}
         run: |
           dotnet tool install --global dotnet-reportgenerator-globaltool
@@ -291,11 +291,10 @@ jobs:
           dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj \
             --no-incremental \
             --no-restore
-          mkdir -p coverage-artifacts
           index=0
           for proj in $(find ${{ inputs.testsFolder }} -name '*.csproj'); do
             echo "➡️ Rodando testes com cobertura para: $proj"
-            dotnet test $proj --no-build --verbosity normal \
+            dotnet test $proj --verbosity Minimal \
                 --collect:"XPlat Code Coverage"
             index=$((index+1))
           done
@@ -334,34 +333,27 @@ jobs:
           reportgenerator -reports:"**\TestResults\**\coverage.cobertura.xml" -targetdir:"coveragereport" -reportTypes:"Html"
 
 
-      # - name: 🧪 ReportGenerator
-      #   if: ${{ inputs.unitTests }}
-      #   uses: danielpalme/ReportGenerator-GitHub-Action@5.4.5
-      #   with:
-      #     reports: 'coverage.cobertura.xml'
-      #     targetdir: 'coveragereport'
-      #     reporttypes: 'HtmlInline;Cobertura'
-      #     assemblyfilters: '+*'
-      #     classfilters: '-*.Migrations.*'
-      #     filefilters: '+*'
-      #     verbosity: 'Verbose'
-      #     title: ${{ inputs.reportTitle }}
-      #     tag: '${{ github.run_number }}_${{ github.run_id }}'
-      #     toolpath: 'reportgeneratortool'
+      - name: 🧪 ReportGenerator
+        if: ${{ inputs.unitTests }}
+        uses: danielpalme/ReportGenerator-GitHub-Action@5.4.5
+        with:
+          reports: 'coverage.cobertura.xml'
+          targetdir: 'coveragereport'
+          reporttypes: 'HtmlInline;Cobertura'
+          assemblyfilters: '+*'
+          classfilters: '-*.Migrations.*'
+          filefilters: '+*'
+          verbosity: 'Verbose'
+          title: ${{ inputs.reportTitle }}
+          tag: '${{ github.run_number }}_${{ github.run_id }}'
+          toolpath: 'reportgeneratortool'
 
-      # - name: 🧪 Upload coverage report artifact
-      #   if: ${{ inputs.unitTests }}
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: CoverageReport
-      #     path: coveragereport
-      - name: 📦 Upload coverage reports
-      # if: ${{ inputs.unitTests && inputs.sonarQube }}
+      - name: 🧪 Upload coverage report artifact
+        if: ${{ inputs.unitTests }}
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-report
-          path: |
-            coveragereport
+          name: CoverageReport
+          path: coveragereport
 
       - name: 🍵 Restore dependencies
         run: |
