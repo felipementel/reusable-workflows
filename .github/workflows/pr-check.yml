@@ -336,12 +336,18 @@ jobs:
           path: |
             spectral-*.xml
             
+      - name: Authenticate GitHub CLI
+        if: github.event_name == 'pull_request'
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
       - name: Add comment to PR
         if: github.event_name == 'pull_request'
         run: gh pr comment $PR_NUMBER --body-file coveragereport/SummaryGithub.md
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.number }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
 
       - name: 🧾 Write to workflow job summary
         run: |
