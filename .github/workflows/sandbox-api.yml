@@ -296,12 +296,6 @@ jobs:
         with:
           name: CoverageReport
           path: coveragereport
-
-      - name: 🗜️ Unzip coverage report (if zipped)
-        run: |
-          if [ -f coveragereport/Cobertura.zip ]; then
-            unzip -o coveragereport/Cobertura.zip -d coveragereport/
-          fi
           
       - name: 🔐 Build, analyze and use coverage (Test ✅, Sonar ✅)
         if: ${{ inputs.unitTests && inputs.sonarQube }}
@@ -315,7 +309,7 @@ jobs:
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
             /d:sonar.host.url="https://sonarcloud.io" \
             /d:sonar.scanner.scanAll=false \
-            /d:sonar.cs.vscoveragexml.reportsPaths=coveragereport/Cobertura.xml \
+            /d:sonar.cs.vscoveragexml.reportsPaths=**/coveragereport/Cobertura.xml \
             /d:sonar.scanner.skipJreProvisioning=true \
             /d:sonar.scanner.javaExePath=${JAVA_HOME}/bin/java \
             /d:sonar.exclusions="${{ inputs.sonarExclusions || ' '}}"
