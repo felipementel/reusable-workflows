@@ -296,6 +296,11 @@ jobs:
         with:
           name: CoverageReport
           path: coveragereport
+
+      - name: 🧐 Verificar cobertura.xml
+        run: |
+          ls -lh coveragereport
+          cat coveragereport/Cobertura.xml | head -n 20
           
       - name: 🔐 Build, analyze and use coverage (Test ✅, Sonar ✅)
         if: ${{ inputs.unitTests && inputs.sonarQube }}
@@ -319,7 +324,7 @@ jobs:
             --no-restore
           dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
-      - name: 🔐 Build, analyze and not coverage (Test ⛔, Sonar ✅)
+      - name: 🔐 Build, analyze and not use coverage (Test ⛔, Sonar ✅)
         if: ${{ !inputs.unitTests && inputs.sonarQube }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
