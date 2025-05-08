@@ -217,6 +217,21 @@ jobs:
           echo "DOTNET_ROOT: $DOTNET_ROOT"
           $DOTNET_ROOT/dotnet --info
 
+      - name: 📝 Create global.json with installed SDK version
+        run: |
+          sdkVersion=$($DOTNET_ROOT/dotnet --info | grep '^ Version:' | head -n1 | awk '{print $2}')
+          echo "Detected .NET SDK version: $sdkVersion"
+          
+          cat <<EOF > global.json
+          {
+            "sdk": {
+              "version": "$sdkVersion"
+            }
+          }
+          EOF
+      
+          cat global.json
+
       - name: 🧪 Install Coverage
         if: ${{ inputs.unitTests }}
         run: |
@@ -359,7 +374,7 @@ jobs:
       #     path: coveragereport
 
       - name: 📦 Upload coverage reports
-        if: ${{ inputs.unitTests && inputs.sonarQube }}
+      # if: ${{ inputs.unitTests && inputs.sonarQube }}
         uses: actions/upload-artifact@v4
         with:
           name: coverage-reports
