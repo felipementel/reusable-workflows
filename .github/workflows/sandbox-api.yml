@@ -323,13 +323,11 @@ jobs:
           index=0
           for proj in $(find ${{ inputs.testsFolder }} -name '*.csproj'); do
             echo "➡️ Rodando testes com cobertura para: $proj"
-            dotnet-coverage collect \
-              "dotnet test $proj --no-build --verbosity normal" \
-              --output-format cobertura \
-              --output "coverage-artifacts/coverage-$index.cobertura.xml"
+            dotnet test $proj --no-build --verbosity normal \
+                --collect:"XPlat Code Coverage"
             index=$((index+1))
           done
-          dotnet-coverage merge coverage-artifacts/*.cobertura.xml -o coverage.cobertura.xml
+          reportgenerator -reports:"**\TestResults\**\coverage.cobertura.xml" -targetdir:"coveragereport" -reportTypes:"Html"
           dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       - name: 🔐 Build and analyze (Test ⛔, Sonar ✅)
@@ -358,13 +356,12 @@ jobs:
           index=0
           for proj in $(find ${{ inputs.testsFolder }} -name '*.csproj'); do
             echo "➡️ Rodando testes com cobertura para: $proj"
-            dotnet-coverage collect \
-              "dotnet test $proj --no-build --configuration Debug --verbosity normal" \
-              --output-format cobertura \
-              --output "coverage-artifacts/coverage-$index.cobertura.xml"
+            dotnet test $proj --verbosity normal \
+                --collect:"XPlat Code Coverage"
             index=$((index+1))
           done
-          dotnet-coverage merge coverage-artifacts/*.cobertura.xml -o coverage.cobertura.xml
+          reportgenerator -reports:"**\TestResults\**\coverage.cobertura.xml" -targetdir:"coveragereport" -reportTypes:"Html"
+
 
       # - name: 🧪 ReportGenerator
       #   if: ${{ inputs.unitTests }}
@@ -387,34 +384,14 @@ jobs:
       #   with:
       #     name: CoverageReport
       #     path: coveragereport
-
-      - name: 📂 Mostrar arquivos gerados na pasta coverage-artifacts
-        run: |
-          echo "Conteúdo da pasta coverage-artifacts:"
-          ls -l coverage-artifacts
-    
-      - name: 📄 Mostrar o conteúdo dos arquivos .cobertura.xml
-        run: |
-          echo "Conteúdo dos arquivos .cobertura.xml:"
-          cat coverage-artifacts/*.cobertura.xml
-
       - name: 📦 Upload coverage reports
       # if: ${{ inputs.unitTests && inputs.sonarQube }}
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-reports
+          name: coverage-report
           path: |
-            coverage-artifacts/*.cobertura.xml
-          #coverage.cobertura.xml
+            coveragereport
 
-
-      - name: 🔍 Restore and run dotnet-coverage with .NET 9
-        run: |
-          echo "Usando SDK .NET: $($DOTNET_ROOT/dotnet --version)"
-          $DOTNET_ROOT/dotnet tool restore
-          $DOTNET_ROOT/dotnet coverage collect \
-            --output coverage-artifacts/coverage-0.cobertura.xml \
-            --project ./tests/DEPLOY.AzureServiceBus.API.Test/DEPLOY.AzureServiceBus.API.Test.csproj
       - name: 🍵 Restore dependencies
         run: |
           dotnet restore ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
