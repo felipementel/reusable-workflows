@@ -397,11 +397,7 @@ jobs:
           spectral lint \
             "output_build/${{ inputs.openAPIFolder }}/*.json" \
             --output.stylish "<stdout>" \
-            --format junit \
-            --output.junit spectral-devops-linter.xml \
-            --format pretty \            
-            --format json \
-            --output.json spectral-devops-linter.json \
+            --output.stylish "<stdout>" \
             --format html \
             --output.html spectral-devops-linter.html \
             --ruleset https://raw.githubusercontent.com/connectedcircuits/devops-api-linter/main/rules.yaml
@@ -411,13 +407,9 @@ jobs:
         run: |
           spectral lint \
             "output_build/${{ inputs.openAPIFolder }}/*.json" \
-            --output.pretty "<stdout>" \
-            --format junit \
-            --output.junit spectral-owasp.xml \
-            --format json \
-            --output.json spectral-owasp.json \
+            --output.stylish "<stdout>" \
             --format html \
-            --output.html spectral-devops-linter.html \
+            --output.html spectral-owasp.html \
             --ruleset https://unpkg.com/@stoplight/spectral-owasp-ruleset
         continue-on-error: true
 
@@ -426,7 +418,7 @@ jobs:
         if: always()
         with:
           name: Spectral-Results
-          path: spectral-*.*
+          path: spectral-*.html
 
       - name: 🧾 Write to workflow job summary
         run: |
