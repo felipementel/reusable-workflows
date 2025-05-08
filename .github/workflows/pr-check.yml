@@ -297,7 +297,7 @@ jobs:
       - name: 🧪 Upload coverage report artifact
         uses: actions/upload-artifact@v4
         with:
-          name: CoverageReport
+          name: Coverage-Report
           path: coveragereport
 
       - name: 🍵 Restore dependencies
@@ -329,23 +329,23 @@ jobs:
       - name: 🎗️ Install Spectral
         run: npm install -g @stoplight/spectral
 
-      - name: 🎗️ Run Spectral Lint with custom ruleset
+      - name: 🎗️ Run Spectral Lint with DevOps Linter ruleset
         run: |
           spectral lint \
-            --format stylish \
-            --format junit \
-            --output.junit spectral-report.xml \
             "output_build/${{ inputs.openAPIFolder }}/*.json" \
+            --format stylish \
+            --format html \
+            --output.html spectral-devops-linter.html \
             --ruleset https://raw.githubusercontent.com/connectedcircuits/devops-api-linter/main/rules.yaml
         continue-on-error: true
 
       - name: 🎗️ Run Spectral Lint with OWASP ruleset
         run: |
           spectral lint \
-            --format stylish \
-            --format junit \
-            --output.junit spectral-owasp.xml \
             "output_build/${{ inputs.openAPIFolder }}/*.json" \
+            --format stylish \
+            --format html \
+            --output.html spectral-owasp.html \
             --ruleset https://unpkg.com/@stoplight/spectral-owasp-ruleset
         continue-on-error: true
 
@@ -353,9 +353,8 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: spectral-results
-          path: |
-            spectral-*.xml
+          name: Spectral-Results
+          path: spectral-*.html
 
       - name: 🧾 Write to workflow job summary
         run: |
