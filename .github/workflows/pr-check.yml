@@ -253,7 +253,7 @@ jobs:
                 --collect:"XPlat Code Coverage"
             index=$((index+1))
           done
-          reportgenerator -reports:"**/TestResults/**/coverage.cobertura.xml" -targetdir:"coveragereport" -reportTypes:"Html"
+          reportgenerator -reports:"../**/TestResults/**/coverage.cobertura.xml" -targetdir:"coveragereport" -reportTypes:"Html"
           dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       - name: 🧪 ReportGenerator
