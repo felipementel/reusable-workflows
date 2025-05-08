@@ -224,7 +224,35 @@ jobs:
           sudo usermod -aG docker $USER
           docker --version
 
-      - name: 🔐 Build and analyze (Test ✅, Sonar ✅)
+      - name: 🧪 Run tests and generate coverage (Test ✅)
+        if: ${{ inputs.unitTests }}
+        run: |
+          for proj in $(find ${{ inputs.testsFolder }} -name '*.csproj'); do
+            echo "➡️ Rodando testes com cobertura para: $proj"
+            dotnet test $proj \
+                --verbosity Minimal \
+                --configuration Debug \
+                --collect:"XPlat Code Coverage"
+            index=$((index+1))
+          done
+            
+          echo -e "${YELLOW}➡️ Gerando relatório HTML e Cobertura..."
+          reportgenerator \
+            -reports:"**/TestResults/**/coverage.cobertura.xml" \
+            -targetdir:"coveragereport" \
+            -reportTypes:"Cobertura;Html;MarkdownSummaryGithub;SonarQube" \
+            -title:${{ inputs.reportTitle }} \
+            -tag:'${{ github.run_number }}_${{ github.run_id }}'
+            
+      - name: 🧪 Upload coverage report artifact
+        if: ${{ inputs.unitTests }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: CoverageReport
+          path: coveragereport
+          
+      - name: 🔐 Build, analyze and use coverage (Test ✅, Sonar ✅)
+        if: ${{ inputs.unitTests && inputs.sonarQube }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -235,7 +263,7 @@ jobs:
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
             /d:sonar.host.url="https://sonarcloud.io" \
             /d:sonar.scanner.scanAll=false \
-            /d:sonar.cs.vscoveragexml.reportsPaths=**/coveragereport/Cobertura.xml \
+            /d:sonar.cs.vscoveragexml.reportsPaths=coverage-merged.xml \
             /d:sonar.scanner.skipJreProvisioning=true \
             /d:sonar.scanner.javaExePath=${JAVA_HOME}/bin/java \
             /d:sonar.exclusions="${{ inputs.sonarExclusions || ' '}}"
@@ -244,22 +272,21 @@ jobs:
             --no-incremental \
             --no-restore
           index=0
+          coverageFiles=""
           for proj in $(find ${{ inputs.testsFolder }} -name '*.csproj'); do
-            echo "➡️ Rodando testes com cobertura para: $proj"
-            dotnet test $proj \
-                --verbosity Minimal \
-                --configuration Debug \
-                --collect:"XPlat Code Coverage"
+            echo -e "${GREEN}➡️ Rodando testes com cobertura para: $proj"
+            dotnet-coverage collect "dotnet test $proj --no-build --configuration Debug" \
+              --output-format xml \
+              --output "coverage-$index.xml"
+            coverageFiles="$coverageFiles coverage-$index.xml"
             index=$((index+1))
           done
-          reportgenerator \
-            -reports:"**/TestResults/**/coverage.cobertura.xml" \
-            -targetdir:"coveragereport" \
-            -reportTypes:"Html;Cobertura;MarkdownSummaryGithub" \
-            -title:${{ inputs.reportTitle }} \
-            -tag:'${{ github.run_number }}_${{ github.run_id }}'
-          dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
+          echo -e "${YELLOW}➡️ Mesclando arquivos de cobertura..."
+          dotnet-coverage merge --output-format xml --output coverage-merged.xml \
+            $coverageFiles
+          dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+          
       # - name: 🧪 ReportGenerator
       #   uses: danielpalme/ReportGenerator-GitHub-Action@5.4.5
       #   with:
