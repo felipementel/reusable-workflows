@@ -222,7 +222,7 @@ jobs:
           sdkVersion=$($DOTNET_ROOT/dotnet --info | grep '^ Version:' | head -n1 | awk '{print $2}')
           echo "Detected .NET SDK version: $sdkVersion"
           
-          cat <<EOF > global.json
+          cat <<EOF > tests/global.json
           {
             "sdk": {
               "version": "$sdkVersion"
@@ -230,7 +230,7 @@ jobs:
           }
           EOF
       
-          cat global.json
+          cat tests/global.json
 
       - name: 🧪 Install Coverage
         if: ${{ inputs.unitTests }}
