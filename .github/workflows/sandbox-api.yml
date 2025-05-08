@@ -144,7 +144,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 4
     permissions:
-      contents: read
+      contents: write
       security-events: write
 
     steps:
@@ -373,6 +373,16 @@ jobs:
       #     name: CoverageReport
       #     path: coveragereport
 
+      - name: 📂 Mostrar arquivos gerados na pasta coverage-artifacts
+        run: |
+          echo "Conteúdo da pasta coverage-artifacts:"
+          ls -l coverage-artifacts
+    
+      - name: 📄 Mostrar o conteúdo dos arquivos .cobertura.xml
+        run: |
+          echo "Conteúdo dos arquivos .cobertura.xml:"
+          cat coverage-artifacts/*.cobertura.xml
+
       - name: 📦 Upload coverage reports
       # if: ${{ inputs.unitTests && inputs.sonarQube }}
         uses: actions/upload-artifact@v4
@@ -382,6 +392,14 @@ jobs:
             coverage-artifacts/*.cobertura.xml
           #coverage.cobertura.xml
 
+
+      - name: 🔍 Restore and run dotnet-coverage with .NET 9
+        run: |
+          echo "Usando SDK .NET: $($DOTNET_ROOT/dotnet --version)"
+          $DOTNET_ROOT/dotnet tool restore
+          $DOTNET_ROOT/dotnet coverage collect \
+            --output coverage-artifacts/coverage-0.cobertura.xml \
+            --project ./tests/DEPLOY.AzureServiceBus.API.Test/DEPLOY.AzureServiceBus.API.Test.csproj
       - name: 🍵 Restore dependencies
         run: |
           dotnet restore ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
