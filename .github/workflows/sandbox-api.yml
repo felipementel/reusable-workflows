@@ -217,10 +217,12 @@ jobs:
           echo "DOTNET_ROOT: $DOTNET_ROOT"
           $DOTNET_ROOT/dotnet --info        
 
-      - name: 🧪 Install dotnet-reportgenerator-globaltool
+      - name: 🧪 Install dotnet-reportgenerator-globaltool and dotnet-coverage
+
         if: ${{ inputs.unitTests }}
         run: |
           dotnet tool install --global dotnet-reportgenerator-globaltool
+          dotnet tool install --global dotnet-coverage
 
       - name: 🧱 Git Leaks
         uses: gitleaks/gitleaks-action@v2
