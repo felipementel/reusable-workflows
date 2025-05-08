@@ -215,7 +215,7 @@ jobs:
           dotnet tool install --global dotnet-sonarscanner 
         #--tool-path .sonar/scanner
 
-      - name: Set up Docker
+      - name: 🐋 Set up Docker
         run: |
           sudo apt-get update
           sudo curl -fsSL https://get.docker.com -o install-docker.sh
