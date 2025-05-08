@@ -396,10 +396,10 @@ jobs:
         run: |
           spectral lint \
             "output_build/${{ inputs.openAPIFolder }}/*.json" \
+            --output.stylish "<stdout>" \
             --format junit \
             --output.junit spectral-devops-linter.xml \
-            --format pretty \
-            --output.pretty "<stdout>" \
+            --format pretty \            
             --format json \
             --output.json spectral-devops-linter.json \
             --format html \
@@ -411,12 +411,11 @@ jobs:
         run: |
           spectral lint \
             "output_build/${{ inputs.openAPIFolder }}/*.json" \
-            --format junit \
-            --output.junit spectral-devops-linter.xml \
-            --format pretty \
             --output.pretty "<stdout>" \
+            --format junit \
+            --output.junit spectral-owasp.xml \
             --format json \
-            --output.json spectral-devops-linter.json \
+            --output.json spectral-owasp.json \
             --format html \
             --output.html spectral-devops-linter.html \
             --ruleset https://unpkg.com/@stoplight/spectral-owasp-ruleset
@@ -426,8 +425,8 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: spectral-results
-          path: spectral-*.xml
+          name: Spectral-Results
+          path: spectral-*.*
 
       - name: 🧾 Write to workflow job summary
         run: |
