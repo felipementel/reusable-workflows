@@ -296,7 +296,7 @@ jobs:
         if: ${{ inputs.unitTests }}
         uses: actions/upload-artifact@v4
         with:
-          name: CoverageReport
+          name: Coverage-Report
           path: coveragereport
           
       - name: 🔐 Build, analyze and use coverage (Test ✅, Sonar ✅)
