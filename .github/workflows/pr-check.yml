@@ -235,7 +235,7 @@ jobs:
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
             /d:sonar.host.url="https://sonarcloud.io" \
             /d:sonar.scanner.scanAll=false \
-            /d:sonar.cs.vscoveragexml.reportsPaths=coveragereport/Cobertura.xml \
+            /d:sonar.cs.vscoveragexml.reportsPaths=**/coveragereport/Cobertura.xml \
             /d:sonar.scanner.skipJreProvisioning=true \
             /d:sonar.scanner.javaExePath=${JAVA_HOME}/bin/java \
             /d:sonar.exclusions="${{ inputs.sonarExclusions || ' '}}"
@@ -252,7 +252,10 @@ jobs:
                 --collect:"XPlat Code Coverage"
             index=$((index+1))
           done
-          reportgenerator -reports:"**/TestResults/**/coverage.cobertura.xml" -targetdir:"coveragereport" -reportTypes:"Html;Cobertura"
+          reportgenerator \
+            -reports:"**/TestResults/**/coverage.cobertura.xml" \
+            -targetdir:"coveragereport" \
+            -reportTypes:"Html;Cobertura;MarkdownSummaryGithub"
           dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       # - name: 🧪 ReportGenerator
@@ -332,6 +335,13 @@ jobs:
           name: spectral-results
           path: |
             spectral-*.xml
+            
+      - name: Add comment to PR
+        if: github.event_name == 'pull_request'
+        run: gh pr comment $PR_NUMBER --body-file coveragereport/SummaryGithub.md
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.number }}
 
       - name: 🧾 Write to workflow job summary
         run: |
