@@ -21,31 +21,6 @@ on:
         description: 'Environment to run the workflow'
         required: true
         default: 'DEV'
-      gitLeaks:
-        type: boolean
-        description: 'Run GitLeaks'
-        required: false
-        default: true
-      sonarQube:
-        type: boolean
-        description: 'Run SonarQube'
-        required: false
-        default: true
-      testsFolder:
-        type: string
-        description: 'The main test folder'
-        required: false
-        default: './tests'
-      unitTests:
-        type: boolean
-        description: 'Run Unit Tests'
-        required: false
-        default: true
-      snyk:
-        type: boolean
-        description: 'Snyk.io'
-        required: false
-        default: true
       msgCanalDeploy:
         type: string
         description: 'Message to be displayed in the summary'
