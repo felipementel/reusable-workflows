@@ -396,8 +396,7 @@ jobs:
         run: |
           spectral lint \
             "output_build/${{ inputs.openAPIFolder }}/*.json" \
-            --output.stylish "<stdout>" \
-            --output.stylish "<stdout>" \
+            --format stylish \
             --format html \
             --output.html spectral-devops-linter.html \
             --ruleset https://raw.githubusercontent.com/connectedcircuits/devops-api-linter/main/rules.yaml
@@ -407,7 +406,7 @@ jobs:
         run: |
           spectral lint \
             "output_build/${{ inputs.openAPIFolder }}/*.json" \
-            --output.stylish "<stdout>" \
+            --format stylish \
             --format html \
             --output.html spectral-owasp.html \
             --ruleset https://unpkg.com/@stoplight/spectral-owasp-ruleset
