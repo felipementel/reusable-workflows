@@ -312,6 +312,8 @@ jobs:
             /d:sonar.host.url="https://sonarcloud.io" \
             /d:sonar.language='cs' \
             /d:sonar.scanner.scanAll=false \
+            /d:sonar.test.inclusions=**/*Tests.cs \
+            /d:sonar.tests=tests \
             /d:sonar.cs.vscoveragexml.reportsPaths=coverage*.xml \
             /d:sonar.scanner.skipJreProvisioning=true \
             /d:sonar.scanner.javaExePath=${JAVA_HOME}/bin/java \
