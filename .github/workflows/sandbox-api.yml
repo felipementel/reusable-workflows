@@ -153,13 +153,13 @@ jobs:
       security-events: write
 
     steps:
-      - name: Get Environment
+      - name: 🧭 Get Environment
         id: get-env
         run: |
           echo -e "${GREEN} ⚠️ Environment ${{ inputs.environment }}"
           echo "NOW=$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_OUTPUT
 
-      - name: Sys - Checkout
+      - name: 📥 Checkout
         uses: actions/checkout@v4
         with:
           sparse-checkout: |
@@ -167,7 +167,7 @@ jobs:
             tests
           sparse-checkout-cone-mode: false
 
-      - name: Sys - Get-Version from csproj
+      - name: 🔍 Get-Version from csproj
         id: get-version
         shell: bash
         run: |
@@ -200,19 +200,19 @@ jobs:
             ColorTagSuffix="${YELLOW}"
           fi
 
-          echo "::group::🔍 Informações de versão extraídas"
+          # echo "::group::🔍 Informações de versão extraídas"
           echo -e "📦${GREEN} Version: $version"
           echo -e "⬅️${ColorTagPrefix} Prefix: ${versionPrefix:-n/a}"
           echo -e "➡️${ColorTagSuffix} Suffix: ${versionSuffix:-n/a}"
           echo -e "🏷️${GREEN} TAG final: $tag"
-          echo "::endgroup::"
+          # echo "::endgroup::"
 
           echo "TAG=$tag" >> "$GITHUB_OUTPUT"
           echo "VERSION=$version" >> "$GITHUB_OUTPUT"
           echo "VERSION_PREFIX=$versionPrefix" >> "$GITHUB_OUTPUT"
           echo "VERSION_SUFFIX=$versionSuffix" >> "$GITHUB_OUTPUT"
       
-      - name: Sys - Setup .NET version ${{ inputs.dotnetVersion }}
+      - name: 🛠️ Setup .NET version ${{ inputs.dotnetVersion }}
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ inputs.dotnetVersion }}
@@ -222,7 +222,7 @@ jobs:
           echo "DOTNET_ROOT: $DOTNET_ROOT"
           $DOTNET_ROOT/dotnet --info        
 
-      - name: 🧪 Install dotnet-reportgenerator-globaltool and dotnet-coverage
+      - name: 🛠️ Install dotnet-reportgenerator-globaltool and dotnet-coverage
         if: ${{ inputs.unitTests }}
         run: |
           dotnet tool install --global dotnet-reportgenerator-globaltool
@@ -238,7 +238,7 @@ jobs:
           GITLEAKS_ENABLE_UPLOAD_ARTIFACT: true
           GITLEAKS_NOTIFY_USER_LIST: '@felipementel'
 
-      - name: 🔐 Set up JDK ${{ env.javaDistro }} ${{ env.javaVersion }}  to use with SonarCloud
+      - name: 🛠️ Set up JDK ${{ env.javaDistro }} ${{ env.javaVersion }}  to use with SonarCloud
         if: ${{ inputs.sonarQube }}
         uses: actions/setup-java@v4
         with:
@@ -388,7 +388,7 @@ jobs:
         with:
           args: --sarif-file-output=snyk.sarif --file=${{ inputs.projectBaseDir }}/${{ inputs.solutionFileName }}
 
-      - name: 🍵 Upload result to GitHub Code Scanning
+      - name: 🍵📤 Upload result to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: snyk.sarif
@@ -421,7 +421,7 @@ jobs:
             --ruleset https://unpkg.com/@stoplight/spectral-owasp-ruleset
         continue-on-error: true
 
-      - name: 🎗️ Upload Spectral Lint Results
+      - name: 🎗️ 📤 Upload Spectral Lint Results
         uses: actions/upload-artifact@v4
         if: always()
         with:
