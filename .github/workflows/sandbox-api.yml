@@ -46,6 +46,11 @@ on:
         description: 'Run Unit Tests'
         required: false
         default: true
+      integrationTests:
+        type: boolean
+        description: 'if will need to create a docker environment'
+        required: false
+        default: false
       snyk:
         type: boolean
         description: 'Snyk.io'
@@ -265,6 +270,7 @@ jobs:
         #--tool-path .sonar/scanner
 
       - name: 🐋 Set up Docker
+        if: ${{ inputs.integrationTests }}
         run: |
           sudo apt-get update
           sudo curl -fsSL https://get.docker.com -o install-docker.sh
