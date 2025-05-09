@@ -222,7 +222,7 @@ jobs:
         #--tool-path .sonar/scanner
 
       - name: 🐋 Set up Docker
-        if: {{ inputs.integrationTests }}
+        if: ${{ inputs.integrationTests }}
         run: |
           sudo apt-get update
           sudo curl -fsSL https://get.docker.com -o install-docker.sh
