@@ -26,6 +26,11 @@ on:
         description: 'The main test folder'
         required: false
         default: './tests'
+      integrationTests:
+        type: boolean
+        description: 'if will need to create a docker environment'
+        required: false
+        default: false
       msgCanalDeploy:
         type: string
         description: 'Message to be displayed in the summary'
@@ -217,6 +222,7 @@ jobs:
         #--tool-path .sonar/scanner
 
       - name: 🐋 Set up Docker
+        if: {{ inputs.integrationTests }}
         run: |
           sudo apt-get update
           sudo curl -fsSL https://get.docker.com -o install-docker.sh
