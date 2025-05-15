@@ -273,7 +273,7 @@ jobs:
           sudo usermod -aG docker $USER
           docker --version
 
-      - name: 🧪 Run tests and generate coverage (Test ✅)
+      - name: 🧪 Run tests and generate coverage
         if: ${{ inputs.tests }}
         run: |
           for proj in $(find ./${{ inputs.testsFolder }}/ -name '*.csproj'); do
