@@ -41,16 +41,11 @@ on:
         description: 'The main test folder'
         required: false
         default: './tests'
-      unitTests:
+      tests:
         type: boolean
-        description: 'Run Unit Tests'
+        description: 'Run Unit & Integration Tests '
         required: false
         default: true
-      integrationTests:
-        type: boolean
-        description: 'if will need to create a docker environment'
-        required: false
-        default: false
       snyk:
         type: boolean
         description: 'Snyk.io'
@@ -223,7 +218,7 @@ jobs:
           $DOTNET_ROOT/dotnet --info        
 
       - name: 🛠️ Install dotnet-reportgenerator-globaltool and dotnet-coverage
-        if: ${{ inputs.unitTests }}
+        if: ${{ inputs.tests }}
         run: |
           dotnet tool install --global dotnet-reportgenerator-globaltool
           dotnet tool install --global dotnet-coverage
@@ -279,7 +274,7 @@ jobs:
           docker --version
 
       - name: 🧪 Run tests and generate coverage (Test ✅)
-        if: ${{ inputs.unitTests }}
+        if: ${{ inputs.tests }}
         run: |
           for proj in $(find ${{ inputs.testsFolder }} -name '*.csproj'); do
             echo "➡️ Rodando testes com cobertura para: $proj"
@@ -299,14 +294,14 @@ jobs:
             -tag:'${{ github.run_number }}_${{ github.run_id }}'
             
       - name: 🧪 Upload coverage report artifact
-        if: ${{ inputs.unitTests }}
+        if: ${{ inputs.tests }}
         uses: actions/upload-artifact@v4
         with:
           name: Coverage-Report
           path: coveragereport
           
       - name: 🔐 Build, analyze and use coverage (Test ✅, Sonar ✅)
-        if: ${{ inputs.unitTests && inputs.sonarQube }}
+        if: ${{ inputs.tests && inputs.sonarQube }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -335,7 +330,7 @@ jobs:
           dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       - name: 🔐 Build, analyze and not use coverage (Test ⛔, Sonar ✅)
-        if: ${{ !inputs.unitTests && inputs.sonarQube }}
+        if: ${{ !inputs.tests && inputs.sonarQube }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
