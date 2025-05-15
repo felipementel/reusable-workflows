@@ -182,14 +182,12 @@ jobs:
           $DOTNET_ROOT/dotnet --info        
 
       - name: 🛠️🧪 Install dotnet-reportgenerator-globaltool and dotnet-coverage
-        if: ${{ inputs.unitTests }}
         run: |
           dotnet tool install --global dotnet-reportgenerator-globaltool
           dotnet tool install --global dotnet-coverage
 
       - name: 🧱 Git Leaks
         uses: gitleaks/gitleaks-action@v2
-        if: ${{ inputs.gitLeaks }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
@@ -198,7 +196,6 @@ jobs:
           GITLEAKS_NOTIFY_USER_LIST: '@felipementel'
 
       - name: 🛠️ Set up JDK ${{ env.javaDistro }} ${{ env.javaVersion }}  to use with SonarCloud
-        if: ${{ inputs.sonarQube }}
         uses: actions/setup-java@v4
         with:
           java-version: ${{ env.javaVersion }}
@@ -226,7 +223,6 @@ jobs:
         #--tool-path .sonar/scanner
 
       - name: 🐋 Set up Docker
-        if: ${{ inputs.integrationTests }}
         run: |
           sudo apt-get update
           sudo curl -fsSL https://get.docker.com -o install-docker.sh
@@ -235,7 +231,6 @@ jobs:
           docker --version
 
       - name: 🧪 Run tests and generate coverage (Test ✅)
-        if: ${{ inputs.unitTests }}
         run: |
           for proj in $(find ${{ inputs.testsFolder }} -name '*.csproj'); do
             echo "➡️ Rodando testes com cobertura para: $proj"
@@ -255,14 +250,12 @@ jobs:
             -tag:'${{ github.run_number }}_${{ github.run_id }}'
             
       - name: 🧪 Upload coverage report artifact
-        if: ${{ inputs.unitTests }}
         uses: actions/upload-artifact@v4
         with:
           name: CoverageReport
           path: coveragereport
           
       - name: 🔐 Build, analyze and use coverage (Test ✅, Sonar ✅)
-        if: ${{ inputs.unitTests && inputs.sonarQube }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
