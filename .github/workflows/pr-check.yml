@@ -232,7 +232,7 @@ jobs:
 
       - name: 🧪 Run tests and generate coverage (Test ✅)
         run: |
-          for proj in $(find ${{ inputs.testsFolder }} -name '*.csproj'); do
+          for proj in $(find ./${{ inputs.testsFolder }}/ -name '*.csproj'); do
             echo "➡️ Rodando testes com cobertura para: $proj"
             dotnet test $proj \
                 --verbosity Minimal \
