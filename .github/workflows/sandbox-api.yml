@@ -389,13 +389,6 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           args: --sarif-file-output=snyk.sarif --file=${{ inputs.projectBaseDir }}/${{ inputs.solutionFileName }}
-
-      - name: Run Snyk to check for vulnerabilities
-        uses: snyk/actions/node@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          command: monitor
           
       - name: Build a Docker image
         run: docker buildx build -t felipementel/azure-service-bus-mvpconf-sandbox -f ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/Dockerfile ${{  inputs.projectBaseDir }}
