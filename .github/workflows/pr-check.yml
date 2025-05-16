@@ -316,7 +316,7 @@ jobs:
         run: docker buildx build -t felipementel/${{ inputs.imageName }} -f ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/Dockerfile ${{ inputs.projectBaseDir }}
         
       - name: 🍵 Snyk Container monitor
-        run: snyk container test felipementel/${{ inputs.imageName }} --file=${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/Dockerfile ${{ inputs.projectBaseDir }}
+        run: snyk container monitor felipementel/${{ inputs.imageName }} --file=${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/Dockerfile
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
