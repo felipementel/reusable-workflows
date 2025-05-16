@@ -287,8 +287,8 @@ jobs:
       - name: 🧪📤 Upload coverage report artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Coverage-Report
-          path: coveragereport
+          name: coveragereport
+          path: Coverage-Report
 
       - name: 🍵 Restore dependencies
         run: |
