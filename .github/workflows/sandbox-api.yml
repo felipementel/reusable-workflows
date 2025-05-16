@@ -385,6 +385,7 @@ jobs:
 
       - name: Build a Docker image
         run: docker buildx build -t felipementel/${{ inputs.imageName }} ${{ inputs.projectBaseDir }}
+             docker buildx build -t felipementel/azure-service-bus-mvpconf-sandbox -f ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/Dockerfile ${{  inputs.projectBaseDir }}
         
         # Runs Snyk Container (Container and SCA) analysis and uploads result to Snyk.
       - name: Snyk Container monitor
