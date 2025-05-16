@@ -372,7 +372,7 @@ jobs:
         
       - name: 🍵 Snyk Container Monitor
         run: |
-          snyk container Monitor felipementel/${{ inputs.imageName }} \
+          snyk container monitor felipementel/${{ inputs.imageName }} \
             --exclude-base-image-vulns \
             --json-file-output=vuln.json
             --file=${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/Dockerfile
