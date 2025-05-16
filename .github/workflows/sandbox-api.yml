@@ -374,6 +374,8 @@ jobs:
 
       - name: 🍵 Snyk Setup
         uses: snyk/actions/setup@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       - name: 🍵 Run Snyk to check for vulnerabilities
         uses: snyk/actions/dotnet@master
