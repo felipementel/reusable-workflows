@@ -313,7 +313,7 @@ jobs:
         run: |
           snyk container test felipementel/${{ inputs.imageName }} \
             --exclude-base-image-vulns \
-            --json-file-output=vuln.json
+            --json-file-output=vuln.json \
             --file=${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/Dockerfile
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
