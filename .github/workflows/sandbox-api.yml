@@ -291,6 +291,7 @@ jobs:
             -targetdir:"coveragereport" \
             -reportTypes:"Cobertura;Html;MarkdownSummaryGithub;SonarQube" \
             -title:${{ inputs.reportTitle }} \
+            -classfilters:"${{ inputs.sonarExclusions || ' '}}" \
             -tag:'${{ github.run_number }}_${{ github.run_id }}'
             
       - name: 🧪 Upload coverage report artifact
@@ -350,38 +351,31 @@ jobs:
           dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj --no-incremental --no-restore
           dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
-      # - name: 🧪 ReportGenerator
-      #   uses: danielpalme/ReportGenerator-GitHub-Action@5.4.5
-      #   with:
-      #     #reports: '**/*coverage.xml'
-      #     reports: 'coverage.cobertura.xml'
-      #     targetdir: 'coveragereport'
-      #     reporttypes: 'HtmlInline;Cobertura'
-      #     assemblyfilters: '+*'
-      #     classfilters: '-*.Migrations.*'
-      #     filefilters: '+*'
-      #     verbosity: 'Verbose'
-      #     title: ${{ inputs.reportTitle }}
-      #     tag: '${{ github.run_number }}_${{ github.run_id }}'
-      #     toolpath: 'reportgeneratortool'
-
       - name: 🍵 Restore dependencies
         run: |
-          dotnet restore ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
-          dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj \
+          dotnet restore \
+            ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
+          dotnet build \
+            ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj \
             --no-restore \
             --output ./output_build
 
       - name: 🍵 Snyk Setup
         uses: snyk/actions/setup@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       - name: 🍵 Build a Docker image
-        run: docker buildx build -t felipementel/${{ inputs.imageName }} -f ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/Dockerfile ${{ inputs.projectBaseDir }}
+        run: |
+          docker buildx build \
+            -t felipementel/${{ inputs.imageName }} \
+            -f ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/Dockerfile \
+            ${{ inputs.projectBaseDir }}
         
-      - name: 🍵 Snyk Container monitor
-        run: snyk container monitor felipementel/${{ inputs.imageName }} --file=${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/Dockerfile
+      - name: 🍵 Snyk Container Monitor
+        run: |
+          snyk container Monitor felipementel/${{ inputs.imageName }} \
+            --exclude-base-image-vulns \
+            --json-file-output=vuln.json
+            --file=${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/Dockerfile
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
@@ -391,12 +385,20 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --sarif-file-output=snyk.sarif --file=${{ inputs.projectBaseDir }}/${{ inputs.solutionFileName }}
+          args: --sarif-file-output=snykDotNet.sarif --file=${{ inputs.projectBaseDir }}/${{ inputs.solutionFileName }}
 
-      - name: 🍵📤 Upload result to GitHub Code Scanning
+      - name: 🍵 Upload result to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v3
+        continue-on-error: true
         with:
-          sarif_file: snyk.sarif
+          sarif_file: snykDotNet.sarif
+
+      - name: 🧪 Upload Snyk Container test
+        uses: actions/upload-artifact@v4
+        with:
+          name: Snyk-Container-Test
+          path: |
+            vuln.json
 
       - name: 🎗️🍵 Setup Node.js ${{ env.nodeVersion }}
         uses: actions/setup-node@v4
