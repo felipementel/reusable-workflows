@@ -316,7 +316,9 @@ jobs:
         run: docker buildx build -t felipementel/${{ inputs.imageName }} -f ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/Dockerfile ${{  inputs.projectBaseDir }}
         
       - name: 🍵 Snyk Container monitor
-        run: snyk container test felipementel/${{ inputs.imageName }} --file=${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/Dockerfile
+        run: snyk container test felipementel/${{ inputs.imageName }} --file=${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       - name: 🍵 Run Snyk to check for vulnerabilities
         uses: snyk/actions/dotnet@master
