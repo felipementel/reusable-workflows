@@ -186,7 +186,7 @@ jobs:
           dotnet tool install --global dotnet-reportgenerator-globaltool
           dotnet tool install --global dotnet-coverage
 
-      - name: 🧱 Git Leaks
+      - name: 🧱📤 Git Leaks
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -247,12 +247,13 @@ jobs:
             -targetdir:"coveragereport" \
             -reportTypes:"Cobertura;Html;MarkdownSummaryGithub;SonarQube" \
             -title:${{ inputs.reportTitle }} \
+            -classfilters:"${{ inputs.sonarExclusions || ' '}}" \
             -tag:'${{ github.run_number }}_${{ github.run_id }}'
             
-      - name: 🧪 Upload coverage report artifact
+      - name: 🧪📤 Upload coverage report artifact
         uses: actions/upload-artifact@v4
         with:
-          name: CoverageReport
+          name: Coverage-Report
           path: coveragereport
           
       - name: 🔐 Build, analyze and use coverage (Test ✅, Sonar ✅)
@@ -282,23 +283,8 @@ jobs:
             --output-format xml \
             --output "coverage.xml"
           dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
-          
-      # - name: 🧪 ReportGenerator
-      #   uses: danielpalme/ReportGenerator-GitHub-Action@5.4.5
-      #   with:
-      #     #reports: '**/*coverage.xml'
-      #     reports: 'coverage.cobertura.xml'
-      #     targetdir: 'coveragereport'
-      #     reporttypes: 'HtmlInline;Cobertura'
-      #     assemblyfilters: '+*'
-      #     classfilters: '-*.Migrations.*'
-      #     filefilters: '+*'
-      #     verbosity: 'Verbose'
-      #     title: ${{ inputs.reportTitle }}
-      #     tag: '${{ github.run_number }}_${{ github.run_id }}'
-      #     toolpath: 'reportgeneratortool'
 
-      - name: 🧪 Upload coverage report artifact
+      - name: 🧪📤 Upload coverage report artifact
         uses: actions/upload-artifact@v4
         with:
           name: Coverage-Report
@@ -340,13 +326,13 @@ jobs:
         with:
           args: --sarif-file-output=snykDotNet.sarif --file=${{ inputs.projectBaseDir }}/${{ inputs.solutionFileName }}
 
-      - name: 🍵 Upload result to GitHub Code Scanning
+      - name: 🍵📤 Upload result to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v3
         continue-on-error: true
         with:
           sarif_file: snykDotNet.sarif
 
-      - name: 🧪 Upload Snyk Container test
+      - name: 🍵📤 Upload Snyk Container test
         uses: actions/upload-artifact@v4
         with:
           name: Snyk-Container-Test
@@ -381,7 +367,7 @@ jobs:
             --ruleset https://unpkg.com/@stoplight/spectral-owasp-ruleset
         continue-on-error: true
 
-      - name: 🎗️ Upload Spectral Lint Results
+      - name: 🎗️📤 Upload Spectral Lint Results
         uses: actions/upload-artifact@v4
         if: always()
         with:
