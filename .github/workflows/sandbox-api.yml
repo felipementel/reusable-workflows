@@ -142,7 +142,7 @@ jobs:
       now: ${{ steps.get-env.outputs.NOW }}
       image-exists: ${{ steps.check-image-and-tag.outputs.IMAGE_EXISTS }}
     runs-on: ubuntu-latest
-    timeout-minutes: 4
+    timeout-minutes: 10
     permissions:
       contents: read
       security-events: write
