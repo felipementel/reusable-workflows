@@ -223,7 +223,7 @@ jobs:
           dotnet tool install --global dotnet-reportgenerator-globaltool
           dotnet tool install --global dotnet-coverage
 
-      - name: 🧱 Git Leaks
+      - name: 🧱📤 Git Leaks
         uses: gitleaks/gitleaks-action@v2
         if: ${{ inputs.gitLeaks }}
         env:
@@ -294,7 +294,7 @@ jobs:
             -classfilters:"${{ inputs.sonarExclusions || ' '}}" \
             -tag:'${{ github.run_number }}_${{ github.run_id }}'
             
-      - name: 🧪 Upload coverage report artifact
+      - name: 🧪📤 Upload coverage report artifact
         if: ${{ inputs.tests }}
         uses: actions/upload-artifact@v4
         with:
@@ -387,20 +387,20 @@ jobs:
         with:
           args: --sarif-file-output=snykDotNet.sarif --file=${{ inputs.projectBaseDir }}/${{ inputs.solutionFileName }}
 
-      - name: 🍵 Upload result to GitHub Code Scanning
+      - name: 🍵📤 Upload result to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v3
         continue-on-error: true
         with:
           sarif_file: snykDotNet.sarif
 
-      - name: 🧪 Upload Snyk Container test
+      - name: 🍵📤 Upload Snyk Container test
         uses: actions/upload-artifact@v4
         with:
           name: Snyk-Container-Test
           path: |
             vuln.json
 
-      - name: 🎗️🍵 Setup Node.js ${{ env.nodeVersion }}
+      - name: 🎗️ Setup Node.js ${{ env.nodeVersion }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.nodeVersion }}
