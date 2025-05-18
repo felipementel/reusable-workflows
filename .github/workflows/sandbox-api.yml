@@ -29,32 +29,32 @@ on:
       gitLeaks:
         type: boolean
         description: 'Run GitLeaks'
-        required: false
+        required: true
         default: true
       sonarQube:
         type: boolean
         description: 'Run SonarQube'
-        required: false
+        required: true
         default: true
       testsFolder:
         type: string
         description: 'The main test folder'
         required: false
-        default: './tests'
+        default: ''
       tests:
         type: boolean
         description: 'Run Unit & Integration Tests'
-        required: false
-        default: true
+        required: true
+        default: false
       snyk:
         type: boolean
         description: 'Snyk.io'
-        required: false
+        required: true
         default: true
       msgCanalDeploy:
         type: string
         description: 'Message to be displayed in the summary'
-        required: false
+        required: true
         default: 'Canal DEPLOY - O melhor canal sobre .NET, Azure, DevOps e IA'
       #build config
       dotnetVersion:
