@@ -185,7 +185,7 @@ jobs:
             echo -e "${GREEN}✅ Projetos de teste encontrados."
           else
             echo "HAS_TESTS=false" >> "$GITHUB_ENV"
-            echo -e"${YELLOW}⚠️ Nenhum projeto de teste encontrado."
+            echo -e "${YELLOW}⚠️ Nenhum projeto de teste encontrado."
           fi
     
       - name: 🛠️🧪 Install dotnet-reportgenerator-globaltool and dotnet-coverage
