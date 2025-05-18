@@ -98,7 +98,7 @@ on:
         type: string
         description: 'Path to the folder containing OpenAPI specification files. This folder should include all necessary YAML or JSON files for API documentation.'
         required: true
-        default: "open-api"
+        default: ""
     secrets:
       SONAR_PROJECT_KEY:
         required: true
@@ -241,16 +241,16 @@ jobs:
           distribution: ${{ env.javaDistro }}
 
       - name: 🔐 SonarCloud packages cache
-        uses: actions/cache@v4
         if: ${{ inputs.sonarQube }}
+        uses: actions/cache@v4
         with:
           path: ~/sonar/cache
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
 
       - name: 🔐 SonarCloud scanner cache
-        id: cache-sonar-scanner
         if: ${{ inputs.sonarQube }}
+        id: cache-sonar-scanner
         uses: actions/cache@v4
         with:
           path: ./.sonar/scanner
@@ -352,6 +352,7 @@ jobs:
           dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       - name: 🍵 Restore dependencies
+        if: ${{ inputs.snyk || inputs.openAPIFolder != '' }}
         run: |
           dotnet restore \
             ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
@@ -361,9 +362,11 @@ jobs:
             --output ./output_build
 
       - name: 🍵 Snyk Setup
+        if: ${{ inputs.snyk }}
         uses: snyk/actions/setup@master
 
       - name: 🍵 Build a Docker image
+        if: ${{ inputs.snyk }}
         run: |
           docker buildx build \
             -t felipementel/${{ inputs.imageName }} \
@@ -371,6 +374,7 @@ jobs:
             ${{ inputs.projectBaseDir }}
         
       - name: 🍵 Snyk Container Monitor
+        if: ${{ inputs.snyk }}
         run: |
           snyk container monitor felipementel/${{ inputs.imageName }} \
             --exclude-base-image-vulns \
@@ -379,6 +383,7 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       - name: 🍵 Run Snyk to check for vulnerabilities
+        if: ${{ inputs.snyk }}
         uses: snyk/actions/dotnet@master
         continue-on-error: true
         env:
@@ -387,12 +392,14 @@ jobs:
           args: --sarif-file-output=snykDotNet.sarif --file=${{ inputs.projectBaseDir }}/${{ inputs.solutionFileName }}
 
       - name: 🍵📤 Upload result to GitHub Code Scanning
+        if: ${{ inputs.snyk }}
         uses: github/codeql-action/upload-sarif@v3
         continue-on-error: true
         with:
           sarif_file: snykDotNet.sarif
 
       - name: 🍵📤 Upload Snyk Container test
+        if: ${{ inputs.snyk }}
         uses: actions/upload-artifact@v4
         with:
           name: Snyk-Container-Test
@@ -400,14 +407,17 @@ jobs:
             vuln.json
 
       - name: 🎗️ Setup Node.js ${{ env.nodeVersion }}
+        if: ${{ inputs.openAPIFolder != '' }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.nodeVersion }}
 
       - name: 🎗️ Install Spectral
+        if: ${{ inputs.openAPIFolder != '' }}
         run: npm install -g @stoplight/spectral
 
       - name: 🎗️ Run Spectral Lint with DevOps Linter ruleset
+        if: ${{ inputs.openAPIFolder != '' }}
         run: |
           spectral lint \
             "output_build/${{ inputs.openAPIFolder }}/*.json" \
@@ -418,6 +428,7 @@ jobs:
         continue-on-error: true
 
       - name: 🎗️ Run Spectral Lint with OWASP ruleset
+        if: ${{ inputs.openAPIFolder != '' }}
         run: |
           spectral lint \
             "output_build/${{ inputs.openAPIFolder }}/*.json" \
@@ -428,8 +439,8 @@ jobs:
         continue-on-error: true
 
       - name: 🎗️ 📤 Upload Spectral Lint Results
+        if: ${{ always() && inputs.openAPIFolder != '' }}
         uses: actions/upload-artifact@v4
-        if: always()
         with:
           name: Spectral-Results
           path: spectral-*.html
