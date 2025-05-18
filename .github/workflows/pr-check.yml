@@ -174,9 +174,22 @@ jobs:
       - name: ✅ Check .NET version in use
         run: |
           echo "DOTNET_ROOT: $DOTNET_ROOT"
-          $DOTNET_ROOT/dotnet --info        
+          $DOTNET_ROOT/dotnet --info
 
+      - name: 🔍 Verifica se existem projetos de teste
+        id: check-tests
+        shell: bash
+        run: |
+          if find . -type f \( -name '*Tests.csproj' -o -name '*Test.csproj' \) | grep -q .; then
+            echo "HAS_TESTS=true" >> "$GITHUB_ENV"
+            echo -e "${GREEN}✅ Projetos de teste encontrados."
+          else
+            echo "HAS_TESTS=false" >> "$GITHUB_ENV"
+            echo -e"${YELLOW}⚠️ Nenhum projeto de teste encontrado."
+          fi
+    
       - name: 🛠️🧪 Install dotnet-reportgenerator-globaltool and dotnet-coverage
+        if: ${{ env.HAS_TESTS }}
         run: |
           dotnet tool install --global dotnet-reportgenerator-globaltool
           dotnet tool install --global dotnet-coverage
@@ -218,6 +231,7 @@ jobs:
         #--tool-path .sonar/scanner
 
       - name: 🐋 Set up Docker
+        if: ${{ env.HAS_TESTS }}
         run: |
           sudo apt-get update
           sudo curl -fsSL https://get.docker.com -o install-docker.sh
@@ -226,6 +240,7 @@ jobs:
           docker --version
 
       - name: 🧪 Run tests and generate coverage
+        if: ${{ env.HAS_TESTS }}
         run: |
           for proj in $(find ./${{ inputs.testsFolder }}/ -name '*.csproj'); do
             echo "➡️ Rodando testes com cobertura para: $proj"
@@ -246,12 +261,14 @@ jobs:
             -tag:'${{ github.run_number }}_${{ github.run_id }}'
             
       - name: 🧪📤 Upload coverage report artifact
+        if: ${{ env.HAS_TESTS }}
         uses: actions/upload-artifact@v4
         with:
           name: Coverage-Report
           path: coveragereport
           
       - name: 🔐 Build, analyze and use coverage (Test ✅, Sonar ✅)
+        if: ${{ env.HAS_TESTS }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -279,7 +296,31 @@ jobs:
             --output "coverage.xml"
           dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
+      - name: 🔐 Build, analyze and use coverage (Test ⛔, Sonar ✅)
+        if: ${{ !env.HAS_TESTS }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          dotnet-sonarscanner begin \
+            /k:"${{ secrets.SONAR_PROJECT_KEY }}" \
+            /o:"${{ vars.SONAR_ORGANIZATION }}" \
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
+            /d:sonar.host.url="https://sonarcloud.io" \
+            /d:sonar.language='cs' \
+            /d:sonar.scanner.scanAll=false \
+            /d:sonar.cs.vscoveragexml.reportsPaths=coverage*.xml \
+            /d:sonar.scanner.skipJreProvisioning=true \
+            /d:sonar.scanner.javaExePath=${JAVA_HOME}/bin/java \
+            /d:sonar.exclusions="${{ inputs.sonarExclusions || ' '}}"
+          dotnet restore ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
+          dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj \
+            --no-incremental \
+            --no-restore
+          dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+
       - name: 🧪📤 Upload coverage report artifact
+        if: ${{ env.HAS_TESTS }}
         uses: actions/upload-artifact@v4
         with:
           name: coveragereport
