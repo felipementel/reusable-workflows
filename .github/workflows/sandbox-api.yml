@@ -230,7 +230,7 @@ jobs:
           fi
 
       - name: 🛠️ Install dotnet-reportgenerator-globaltool and dotnet-coverage
-        if: ${{ inputs.tests }}
+        if: ${{ steps.check-tests.outputs.has-tests == 'true' && inputs.tests }}
         run: |
           dotnet tool install --global dotnet-reportgenerator-globaltool
           dotnet tool install --global dotnet-coverage
@@ -277,7 +277,7 @@ jobs:
         #--tool-path .sonar/scanner
 
       - name: 🐋 Set up Docker
-        if: ${{ inputs.tests }}
+        if: ${{ steps.check-tests.outputs.has-tests == 'true' && inputs.tests }}
         run: |
           sudo apt-get update
           sudo curl -fsSL https://get.docker.com -o install-docker.sh
@@ -286,7 +286,7 @@ jobs:
           docker --version
 
       - name: 🧪 Run tests and generate coverage
-        if: ${{ inputs.tests }}
+        if: ${{ steps.check-tests.outputs.has-tests == 'true' && inputs.tests }}
         run: |
           for proj in $(find ./${{ inputs.testsFolder }}/ -name '*.csproj'); do
             echo "➡️ Rodando testes com cobertura para: $proj"
@@ -307,7 +307,7 @@ jobs:
             -tag:'${{ github.run_number }}_${{ github.run_id }}'
             
       - name: 🧪📤 Upload coverage report artifact
-        if: ${{ inputs.tests }}
+        if: ${{ steps.check-tests.outputs.has-tests == 'true' && inputs.tests }}
         uses: actions/upload-artifact@v4
         with:
           name: Coverage-Report
