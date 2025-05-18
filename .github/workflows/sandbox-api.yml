@@ -215,7 +215,19 @@ jobs:
       - name: ✅ Check .NET version in use
         run: |
           echo "DOTNET_ROOT: $DOTNET_ROOT"
-          $DOTNET_ROOT/dotnet --info        
+          $DOTNET_ROOT/dotnet --info
+
+      - name: 🔍 Verifica se existem projetos de teste
+        id: check-tests
+        shell: bash
+        run: |
+          if find . -type f \( -name '*Tests.csproj' -o -name '*Test.csproj' \) | grep -q .; then
+            echo "HAS_TESTS=true" >> "$GITHUB_ENV"
+            echo -e "${GREEN}✅ Projetos de teste encontrados."
+          else
+            echo "HAS_TESTS=false" >> "$GITHUB_ENV"
+            echo -e "${YELLOW}⚠️ Nenhum projeto de teste encontrado."
+          fi
 
       - name: 🛠️ Install dotnet-reportgenerator-globaltool and dotnet-coverage
         if: ${{ inputs.tests }}
