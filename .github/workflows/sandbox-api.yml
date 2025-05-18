@@ -343,12 +343,13 @@ jobs:
             /d:sonar.host.url="https://sonarcloud.io" \
             /d:sonar.language='cs' \
             /d:sonar.scanner.scanAll=false \
-            /d:sonar.cs.vscoveragexml.reportsPaths=coverage*.xml \
             /d:sonar.scanner.skipJreProvisioning=true \
             /d:sonar.scanner.javaExePath=${JAVA_HOME}/bin/java \
             /d:sonar.exclusions="${{ inputs.sonarExclusions || ' '}}"
           dotnet restore ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
-          dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj --no-incremental --no-restore
+          dotnet build ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj \
+            --no-incremental \
+            --no-restore
           dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       - name: 🍵 Restore dependencies
