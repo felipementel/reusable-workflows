@@ -25,12 +25,7 @@ on:
         type: string
         description: 'The main test folder'
         required: false
-        default: './tests'
-      integrationTests:
-        type: boolean
-        description: 'if will need to create a docker environment'
-        required: false
-        default: false
+        default: 'tests'
       msgCanalDeploy:
         type: string
         description: 'Message to be displayed in the summary'
@@ -340,14 +335,17 @@ jobs:
             vuln.json
 
       - name: 🎗️ Setup Node.js ${{ env.nodeVersion }}
-        uses: actions/setup-node@v4
+        if: ${{ inputs.openAPIFolder != '' }}
+        uses: actions/setup-node@v4        
         with:
           node-version: ${{ env.nodeVersion }}
 
       - name: 🎗️ Install Spectral
+        if: ${{ inputs.openAPIFolder != '' }}
         run: npm install -g @stoplight/spectral
 
       - name: 🎗️ Run Spectral Lint with DevOps Linter ruleset
+        if: ${{ inputs.openAPIFolder != '' }}
         run: |
           spectral lint \
             "output_build/${{ inputs.openAPIFolder }}/*.json" \
@@ -358,6 +356,7 @@ jobs:
         continue-on-error: true
 
       - name: 🎗️ Run Spectral Lint with OWASP ruleset
+        if: ${{ inputs.openAPIFolder != '' }}
         run: |
           spectral lint \
             "output_build/${{ inputs.openAPIFolder }}/*.json" \
@@ -368,8 +367,8 @@ jobs:
         continue-on-error: true
 
       - name: 🎗️📤 Upload Spectral Lint Results
+        if: ${{ always() && inputs.openAPIFolder != '' }}
         uses: actions/upload-artifact@v4
-        if: always()
         with:
           name: Spectral-Results
           path: spectral-*.html
