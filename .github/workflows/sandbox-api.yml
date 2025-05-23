@@ -222,10 +222,10 @@ jobs:
         shell: bash
         run: |
           if find . -type f \( -name '*Tests.csproj' -o -name '*Test.csproj' \) | grep -q .; then
-            echo "HAS_TESTS=true" >> "$GITHUB_ENV"
+            echo "HAS_TESTS=true" >> "$GITHUB_OUTPUT"
             echo -e "${GREEN}✅ Projetos de teste encontrados."
           else
-            echo "HAS_TESTS=false" >> "$GITHUB_ENV"
+            echo "HAS_TESTS=false" >> "$GITHUB_OUTPUT"
             echo -e "${YELLOW}⚠️ Nenhum projeto de teste encontrado."
           fi
 
