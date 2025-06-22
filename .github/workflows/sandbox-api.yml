@@ -314,7 +314,7 @@ jobs:
           path: coveragereport
           
       - name: 🔐 Build, analyze and use coverage (Test ✅, Sonar ✅)
-        if: ${{ inputs.tests && inputs.sonarQube }}
+        if: ${{ steps.check-tests.outputs.HAS_TESTS == 'true' && inputs.tests && inputs.sonarQube }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -343,7 +343,7 @@ jobs:
           dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       - name: 🔐 Build, analyze and not use coverage (Test ⛔, Sonar ✅)
-        if: ${{ !inputs.tests && inputs.sonarQube }}
+        if: ${{ steps.check-tests.outputs.HAS_TESTS != 'true' && !inputs.tests && inputs.sonarQube }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
