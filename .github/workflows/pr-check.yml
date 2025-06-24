@@ -116,6 +116,7 @@ jobs:
       - name: 📥 Checkout
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.ref }}
           sparse-checkout: |
             src
             tests
