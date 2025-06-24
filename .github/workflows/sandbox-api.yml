@@ -1,4 +1,4 @@
-name: Sanbox API Dispatch ⚡
+name: Sandbox API Dispatch ⚡
 run-name: "${{ github.actor }} - ${{ github.run_id }}"
 
 #Secrets on Caller: GITLEAKS_LICENSE, SNYK_TOKEN, SONAR_TOKEN, SONAR_PROJECT_KEY
