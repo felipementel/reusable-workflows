@@ -4,16 +4,6 @@ run-name: "${{ github.actor }} - ${{ github.run_id }}"
 #Secrets on Caller: GITLEAKS_LICENSE, SNYK_TOKEN, SONAR_TOKEN, SONAR_PROJECT_KEY
 #VARS on Caller: SONAR_ORGANIZATION
 on:
-  pull_request:
-    branches:
-      - main
-    types:
-      closed
-    paths-ignore:
-      - '**.md'
-      - '.github/**'
-      - 'docker/**'
-      - 'docs/**'
   workflow_call:
     inputs:
       buildMode:
