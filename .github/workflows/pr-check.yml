@@ -186,6 +186,10 @@ jobs:
           dotnet tool install --global dotnet-reportgenerator-globaltool
           dotnet tool install --global dotnet-coverage
 
+      - name: Event name
+        run: |
+          echo "${{ github.event_name }}"
+
       - name: 🧱📤 Git Leaks
         if: github.event_name != 'pull_request_target' || github.event.pull_request.head.repo.full_name == github.repository
         uses: gitleaks/gitleaks-action@v2
