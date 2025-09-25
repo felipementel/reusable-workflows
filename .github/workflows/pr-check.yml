@@ -90,7 +90,7 @@ jobs:
     environment: ${{ inputs.environment }}
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: false
     outputs:
       tag-version: ${{ steps.get-version.outputs.TAG }}
       now: ${{ steps.get-env.outputs.NOW }}
