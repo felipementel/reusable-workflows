@@ -157,7 +157,7 @@ jobs:
           echo "VERSION=$version" >> "$GITHUB_OUTPUT"
           echo "VERSION_PREFIX=$versionPrefix" >> "$GITHUB_OUTPUT"
           echo "VERSION_SUFFIX=$versionSuffix" >> "$GITHUB_OUTPUT"
-      
+
       - name: 🛠️ Setup .NET version ${{ inputs.dotnetVersion }}
         uses: actions/setup-dotnet@v4
         with:
@@ -179,7 +179,7 @@ jobs:
             echo "HAS_TESTS=false" >> "$GITHUB_OUTPUT"
             echo -e "${YELLOW}⚠️ Nenhum projeto de teste encontrado."
           fi
-    
+
       - name: 🛠️🧪 Install dotnet-reportgenerator-globaltool and dotnet-coverage
         if: ${{ steps.check-tests.outputs.HAS_TESTS == 'true' }}
         run: |
@@ -247,7 +247,7 @@ jobs:
                 --collect:"XPlat Code Coverage"
             index=$((index+1))
           done
-            
+
           echo -e "${YELLOW}➡️ Gerando relatório HTML e Cobertura..."
           reportgenerator \
             -reports:"**/TestResults/**/coverage.cobertura.xml" \
@@ -256,14 +256,14 @@ jobs:
             -title:${{ inputs.reportTitle }} \
             -classfilters:"${{ inputs.sonarExclusions || ' '}}" \
             -tag:'${{ github.run_number }}_${{ github.run_id }}'
-            
+
       - name: 🧪📤 Upload coverage report artifact
         if: ${{ steps.check-tests.outputs.HAS_TESTS == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: Coverage-Report
           path: coveragereport
-          
+
       - name: 🔐 Build, analyze and use coverage (Test ✅, Sonar ✅)
         if: ${{ steps.check-tests.outputs.HAS_TESTS == 'true' && inputs.tests && inputs.sonarQube }}
         env:
@@ -340,7 +340,7 @@ jobs:
             -t felipementel/${{ inputs.imageName }} \
             -f ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/Dockerfile \
             ${{ inputs.projectBaseDir }}
-        
+
       - name: 🍵 Snyk Container test
         run: |
           snyk container test felipementel/${{ inputs.imageName }} \
@@ -457,7 +457,7 @@ jobs:
       - name: 🧾 Write to workflow job summary
         run: |
           echo "Image with tag ${{ needs.build.outputs.tag-version }} can be deployed. Push image to registry and publish on Azure Cloud." >> $GITHUB_STEP_SUMMARY
-          
+
   notify-image-exists:
     name: Notify when already image exists
     needs: [build, check-image]

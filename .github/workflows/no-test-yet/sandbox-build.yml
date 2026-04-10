@@ -135,14 +135,14 @@ jobs:
         shell: bash
         run: |
           version=$(sed -n 's/.*<Version>\(.*\)<\/Version>.*/\1/p' ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj)
-          
+
           if [[ -z "$version" ]]; then
             echo -e "${RED} Erro: A versão não foi encontrada no arquivo .csproj"
             exit 1
           fi
 
           echo "TAG=$version" >> "$GITHUB_OUTPUT"
-      
+
       - name: Sys - Setup .NET version ${{ inputs.dotnetVersion }}
         uses: actions/setup-dotnet@v4
         with:
@@ -153,7 +153,7 @@ jobs:
         run: |
           dotnet tool install --global dotnet-coverage
           dotnet tool install --global dotnet-reportgenerator-globaltool
-          
+
       - name: 🧱 Git Leaks
         uses: gitleaks/gitleaks-action@v2
         if: ${{ inputs.git-leaks }}
@@ -274,7 +274,7 @@ jobs:
 
       - name: 🍵 Upload result to GitHub Code Scanning
         if: ${{ inputs.git-leaks }}
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: snyk.sarif
 
@@ -287,7 +287,7 @@ jobs:
           | ${{ steps.get-version.outputs.tag }} | ${{ steps.get-env.outputs.now }} | \n
           Mensagem: ${{ inputs.msg-canal-deploy }}\n'
           echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
-          
+
   check-image:
     name: Check if image exists
     environment: ${{ inputs.environment }}
