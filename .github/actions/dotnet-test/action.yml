@@ -48,16 +48,6 @@ runs:
         dotnet tool install --global dotnet-reportgenerator-globaltool
         dotnet tool install --global dotnet-coverage
 
-    - name: 🐋 Set up Docker
-      if: ${{ steps.check-tests.outputs.HAS_TESTS == 'true' }}
-      shell: bash
-      run: |
-        sudo apt-get update
-        sudo curl -fsSL https://get.docker.com -o install-docker.sh
-        sudo sh install-docker.sh
-        sudo usermod -aG docker $(whoami)
-        docker --version
-
     - name: 🧪 Run tests and generate coverage
       if: ${{ steps.check-tests.outputs.HAS_TESTS == 'true' }}
       shell: bash

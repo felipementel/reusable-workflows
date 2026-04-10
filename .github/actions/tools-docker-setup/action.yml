@@ -1,0 +1,15 @@
+name: 'Docker Setup'
+description: 'Sets up Docker environment.'
+
+runs:
+  using: 'composite'
+  steps:
+
+    - name: 🐋 Set up Docker
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo curl -fsSL https://get.docker.com -o install-docker.sh
+        sudo sh install-docker.sh
+        sudo usermod -aG docker $(whoami)
+        docker --version

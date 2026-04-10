@@ -79,6 +79,11 @@ on:
         description: 'Docker build context (e.g. src/Project/Project or .)'
         required: false
         default: ''
+      docker:
+        type: boolean
+        description: 'Whether to set up Docker for the Snyk container scan'
+        required: false
+        default: false
     secrets:
       SONAR_PROJECT_KEY:
         required: true
@@ -176,6 +181,10 @@ jobs:
       #     mainProject: ${{ inputs.mainProject }}
       #     solutionFileName: ${{ inputs.solutionFileName }}
 
+      - name: 🐋 Docker setup
+        if: ${{ inputs.docker == 'true' }}
+        uses: felipementel/reusable-workflows/.github/actions/tools-docker-setup@main
+
       - name: 🧪 Dotnet Test & Coverage
         id: dotnet-test
         uses: felipementel/reusable-workflows/.github/actions/dotnet-test@main
@@ -201,6 +210,10 @@ jobs:
           java-version: ${{ env.javaVersion }}
           java-distro: ${{ env.javaDistro }}
 
+      - name: Build an image from Dockerfile
+        run: |
+          docker build -t ${{ inputs.imageName }}:${{ github.sha }} .
+
       - name: 🍵 Snyk Security Scan
         uses: felipementel/reusable-workflows/.github/actions/tools-snyk-dotnet@main
         with:
@@ -208,9 +221,17 @@ jobs:
           projectBaseDir: ${{ inputs.projectBaseDir }}
           mainProject: ${{ inputs.mainProject }}
           solutionFileName: ${{ inputs.solutionFileName }}
-          imageName: ${{ inputs.imageName }}:${{ needs.build.outputs.tag-version }}
+          imageName: ${{ inputs.imageName }}:${{ github.sha }}
           dockerFileFullPath: ${{ inputs.dockerFileFullPath }}
           dockerBuildContext: ${{ inputs.dockerBuildContext }}
+
+      - name: Safety Python Dependency Check
+        uses: felipementel/reusable-workflows/.github/actions/tools-safety@main
+        with:
+          safety-api-key: ${{ secrets.SAFETY_API_KEY }}
+          projectBaseDir: ${{ inputs.projectBaseDir }}
+          mainProject: ${{ inputs.mainProject }}
+          solutionFileName: ${{ inputs.solutionFileName }}
 
       # Trivy no source/repo SAST scan (vulnerabilities, secrets, misconfigurations)
       - name: 🔎 Trivy - Filesystem Scan (vuln, secret, misconfig)
@@ -219,7 +240,8 @@ jobs:
           scan-type: 'fs'
           scan-ref: '${{ env.working_directory }}'
           scanners: 'vuln,misconfig,secret'
-          format: 'github'
+          format: 'sarif'
+          output-file: 'trivy-fs-results.sarif'
           severity: 'HIGH,CRITICAL'
           ignore-unfixed: true
           exit-code: '1'
@@ -231,8 +253,21 @@ jobs:
           scan-type: 'fs'
           scan-ref: '${{ env.working_directory }}'
           scanners: 'license'
-          format: 'github'
+          format: 'sarif'
+          output-file: 'trivy-license-results.sarif'
           severity: 'MEDIUM,HIGH,CRITICAL'
+          ignore-unfixed: true
+          exit-code: '1'
+          trivyignores: ${{ steps.check-trivyignore.outputs.path }}
+
+      - name: Run Trivy vulnerability scanner
+        uses: felipementel/reusable-workflows/.github/actions/tools-trivy-scan@main
+        with:
+          image-ref: ${{ inputs.imageName }}:${{ github.sha }}
+          scan-type: 'image'
+          format: 'sarif'
+          output: 'trivy-image-results.sarif'
+          severity: 'HIGH,CRITICAL'
           ignore-unfixed: true
           exit-code: '1'
           trivyignores: ${{ steps.check-trivyignore.outputs.path }}
