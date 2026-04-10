@@ -177,7 +177,7 @@ jobs:
           run-id: ${{ github.run_id }}
 
       - name: 📸 SonarCloud Analysis
-        uses: felipementel/reusable-workflows/.github/actions/tools-sonar-cloud@main
+        uses: felipementel/reusable-workflows/.github/actions/tools-sonar-cloud-dotnet@main
         with:
           has-tests: ${{ steps.dotnet-test.outputs.has-tests }}
           sonar-project-key: ${{ secrets.SONAR_PROJECT_KEY }}
