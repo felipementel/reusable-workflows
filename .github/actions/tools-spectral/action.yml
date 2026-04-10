@@ -41,14 +41,14 @@ runs:
 
     - name: 🎗️ Install Spectral
       shell: bash
-      run: npm install -g @stoplight/spectral
+      run: npm install -g @stoplight/spectral-cli
 
     - name: 🎗️ Run Spectral Lint with DevOps Linter ruleset
       shell: bash
       continue-on-error: true
       run: |
         spectral lint \
-          "output_build/${{ inputs.openAPIFolder }}/*.json" \
+          "${{ inputs.projectBaseDir }}/${{ inputs.openAPIFolder }}/*.json" \
           --format stylish \
           --format html \
           --output.html spectral-devops-linter.html \
@@ -59,7 +59,7 @@ runs:
       continue-on-error: true
       run: |
         spectral lint \
-          "output_build/${{ inputs.openAPIFolder }}/*.json" \
+          "${{ inputs.projectBaseDir }}/${{ inputs.openAPIFolder }}/*.json" \
           --format stylish \
           --format html \
           --output.html spectral-owasp.html \

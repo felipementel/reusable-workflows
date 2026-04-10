@@ -57,7 +57,7 @@ runs:
       run: |
         snyk container monitor ${{ inputs.imageName }} \
           --exclude-base-image-vulns \
-          --file=${{ inputs.docker-file-fullpath }}
+          --file=${{ inputs.docker-file-full-path }}
 
     - name: 🍵 Run Snyk to check for vulnerabilities
       uses: snyk/actions/dotnet@master
@@ -65,7 +65,7 @@ runs:
       env:
         SNYK_TOKEN: ${{ inputs.snyk-token }}
       with:
-        args: --sarif-file-output=snykDotNet.sarif --file=${{ inputs.projectBaseDir }}/${{ inputs.solutionFileName }}
+        args: --sarif-file-output=snykDotNet.sarif --file=${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
 
     - name: 🍵📤 Upload result to GitHub Code Scanning
       uses: github/codeql-action/upload-sarif@v4

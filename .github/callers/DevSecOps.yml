@@ -43,8 +43,8 @@ jobs:
       imageName: 'project-api'
       openAPIFolder: 'open-api'
       msgCanalDeploy: 'Canal DEPLOY - O melhor canal sobre .NET, Azure, DevOps e IA'
-      dockerFileFullPath: 'src/Usuarios.Api/Dockerfile'
-      dockerBuildContext: 'src/Usuarios.Api'
+      dockerFileFullPath: './src/Dockerfile'
+      dockerBuildContext: '.'
 
     permissions:
       security-events: write

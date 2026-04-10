@@ -146,6 +146,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ github.ref }}
+          fetch-depth: 0
           sparse-checkout: |
             src
             tests
@@ -224,16 +225,13 @@ jobs:
           mainProject: ${{ inputs.mainProject }}
           solutionFileName: ${{ inputs.solutionFileName }}
           imageName: ${{ inputs.imageName }}:${{ github.sha }}
-          dockerFileFullPath: ${{ inputs.dockerFileFullPath }}
-          dockerBuildContext: ${{ inputs.dockerBuildContext }}
+          docker-file-full-path: ${{ inputs.dockerFileFullPath }}
+          docker-build-context: ${{ inputs.dockerBuildContext }}
 
       - name: Safety Python Dependency Check
         uses: felipementel/reusable-workflows/.github/actions/tools-safety@main
         with:
           api-key: ${{ secrets.SAFETY_API_KEY }}
-          projectBaseDir: ${{ inputs.projectBaseDir }}
-          mainProject: ${{ inputs.mainProject }}
-          solutionFileName: ${{ inputs.solutionFileName }}
 
       # Trivy no source/repo SAST scan (vulnerabilities, secrets, misconfigurations)
       - name: 🔎 Trivy - Filesystem Scan (vuln, secret, misconfig)
