@@ -69,6 +69,16 @@ on:
         description: 'Path to the folder containing OpenAPI specification files. This folder should include all necessary YAML or JSON files for API documentation.'
         required: true
         default: ""
+      dockerFileFullPath:
+        type: string
+        description: 'Full path to the Dockerfile to be used in the container scan (e.g. src/Project/Project/Dockerfile)'
+        required: false
+        default: ''
+      dockerBuildContext:
+        type: string
+        description: 'Docker build context (e.g. src/Project/Project or .)'
+        required: false
+        default: ''
     secrets:
       SONAR_PROJECT_KEY:
         required: true
@@ -199,6 +209,8 @@ jobs:
           mainProject: ${{ inputs.mainProject }}
           solutionFileName: ${{ inputs.solutionFileName }}
           imageName: ${{ inputs.imageName }}
+          docker-file-fullpath: ${{ inputs.dockerFileFullPath }}
+          docker-build-context: ${{ inputs.dockerBuildContext }}
 
       # Trivy no source/repo SAST scan (vulnerabilities, secrets, misconfigurations)
       - name: 🔎 Trivy - Filesystem Scan (vuln, secret, misconfig)

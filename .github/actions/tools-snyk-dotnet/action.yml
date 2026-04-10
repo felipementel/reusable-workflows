@@ -17,6 +17,14 @@ inputs:
   imageName:
     description: 'Image name for container scan'
     required: true
+  docker-file-fullpath:
+    description: 'Full path to the Dockerfile to be used in the container scan (e.g. src/Project/Project/Dockerfile)'
+    required: false
+    default: ''
+  docker-build-context:
+    description: 'Docker build context (e.g. src/Project/Project or .)'
+    required: false
+    default: ''
 
 runs:
   using: 'composite'
@@ -39,8 +47,8 @@ runs:
       run: |
         docker buildx build \
           -t felipementel/${{ inputs.imageName }} \
-          -f ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/Dockerfile \
-          ${{ inputs.projectBaseDir }}
+          -f ${{ inputs.docker-file-fullpath || inputs.projectBaseDir + '/' + inputs.mainProject + '/Dockerfile' }} \
+          ${{ inputs.docker-build-context || inputs.projectBaseDir }}
 
     - name: 🍵 Snyk Container Monitor
       shell: bash
@@ -49,7 +57,7 @@ runs:
       run: |
         snyk container monitor felipementel/${{ inputs.imageName }} \
           --exclude-base-image-vulns \
-          --file=${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/Dockerfile
+          --file=${{ inputs.docker-file-fullpath || inputs.projectBaseDir + '/' + inputs.mainProject + '/Dockerfile' }}
 
     - name: 🍵 Run Snyk to check for vulnerabilities
       uses: snyk/actions/dotnet@master
