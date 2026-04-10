@@ -211,8 +211,10 @@ jobs:
           java-distro: ${{ env.javaDistro }}
 
       - name: Build an image from Dockerfile
-        run: |
-          docker build -t ${{ inputs.imageName }}:${{ github.sha }} .
+        run: >-
+          docker build 
+          -t ${{ inputs.imageName }}:${{ github.sha }} 
+          -f ${{ inputs.dockerFileFullPath }} ${{ inputs.dockerBuildContext }}
 
       - name: 🍵 Snyk Security Scan
         uses: felipementel/reusable-workflows/.github/actions/tools-snyk-dotnet@main
