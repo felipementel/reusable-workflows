@@ -79,7 +79,7 @@ on:
         description: 'Docker build context (e.g. src/Project/Project or .)'
         required: false
         default: ''
-      docker:
+      docker-setup:
         type: boolean
         description: 'Whether to set up Docker for the Snyk container scan'
         required: false
@@ -182,7 +182,7 @@ jobs:
       #     solutionFileName: ${{ inputs.solutionFileName }}
 
       - name: 🐋 Docker setup
-        if: ${{ inputs.docker == 'true' }}
+        if: ${{ inputs.docker-setup == 'true' }}
         uses: felipementel/reusable-workflows/.github/actions/tools-docker-setup@main
 
       - name: 🧪 Dotnet Test & Coverage
