@@ -26,6 +26,18 @@ inputs:
     description: 'Type of scan (image, fs, license)'
     required: true
     default: ''
+  scan-ref:
+    description: 'Directory or file to scan (used with fs scan-type)'
+    required: false
+    default: '.'
+  scanners:
+    description: 'Comma-separated list of scanners (vuln, misconfig, secret, license)'
+    required: false
+    default: 'vuln'
+  ignore-unfixed:
+    description: 'Ignore unpatched/unfixed vulnerabilities'
+    required: false
+    default: 'false'
   trivyignores:
     description: 'Path to trivyignore file (e.g., .trivyignore.yaml). Leave empty to skip.'
     required: false
@@ -38,15 +50,15 @@ inputs:
 outputs:
   scan-results:
     description: "Path to scan results file"
-    value: ${{ steps.scan.outputs.output-file }}
+    value: ${{ steps.scan-image.outputs.output-file || steps.scan-fs.outputs.output-file }}
 
 runs:
   using: 'composite'
   steps:
 
-    - name: 🔍 Scan with Trivy
+    - name: 🔍 Scan with Trivy (image)
       if: ${{ inputs.scan-type == 'image' }}
-      id: scan
+      id: scan-image
       uses: aquasecurity/trivy-action@0.35.0
       with:
         image-ref: ${{ inputs.image-ref }}
@@ -54,7 +66,22 @@ runs:
         output: ${{ inputs.output-file }}
         severity: ${{ inputs.severity }}
         scan-type: ${{ inputs.scan-type }}
-        ignore-unfixed: 'true'
+        ignore-unfixed: ${{ inputs.ignore-unfixed }}
+        trivyignores: ${{ inputs.trivyignores }}
+        exit-code: ${{ inputs.exit-code }}
+
+    - name: 🔍 Scan with Trivy (filesystem)
+      if: ${{ inputs.scan-type == 'fs' }}
+      id: scan-fs
+      uses: aquasecurity/trivy-action@0.35.0
+      with:
+        scan-type: ${{ inputs.scan-type }}
+        scan-ref: ${{ inputs.scan-ref }}
+        scanners: ${{ inputs.scanners }}
+        format: ${{ inputs.format }}
+        output: ${{ inputs.output-file }}
+        severity: ${{ inputs.severity }}
+        ignore-unfixed: ${{ inputs.ignore-unfixed }}
         trivyignores: ${{ inputs.trivyignores }}
         exit-code: ${{ inputs.exit-code }}
 

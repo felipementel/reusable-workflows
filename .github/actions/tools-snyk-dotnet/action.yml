@@ -17,7 +17,7 @@ inputs:
   imageName:
     description: 'Image name for container scan'
     required: true
-  docker-file-fullpath:
+  docker-file-full-path:
     description: 'Full path to the Dockerfile to be used in the container scan (e.g. src/Project/Project/Dockerfile)'
     required: false
     default: ''

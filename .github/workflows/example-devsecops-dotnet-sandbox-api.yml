@@ -208,9 +208,9 @@ jobs:
           projectBaseDir: ${{ inputs.projectBaseDir }}
           mainProject: ${{ inputs.mainProject }}
           solutionFileName: ${{ inputs.solutionFileName }}
-          imageName: ${{ inputs.imageName }}
-          docker-file-fullpath: ${{ inputs.dockerFileFullPath }}
-          docker-build-context: ${{ inputs.dockerBuildContext }}
+          imageName: ${{ inputs.imageName }}:${{ needs.build.outputs.tag-version }}
+          dockerFileFullPath: ${{ inputs.dockerFileFullPath }}
+          dockerBuildContext: ${{ inputs.dockerBuildContext }}
 
       # Trivy no source/repo SAST scan (vulnerabilities, secrets, misconfigurations)
       - name: 🔎 Trivy - Filesystem Scan (vuln, secret, misconfig)
