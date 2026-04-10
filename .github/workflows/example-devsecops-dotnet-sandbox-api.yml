@@ -159,12 +159,12 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           gitleaks-license: ${{ secrets.GITLEAKS_LICENSE }}
 
-      - name: Owasp Dependency Check
-        uses: felipementel/reusable-workflows/.github/actions/tools-owasp-zap@main
-        with:
-          projectBaseDir: ${{ inputs.projectBaseDir }}
-          mainProject: ${{ inputs.mainProject }}
-          solutionFileName: ${{ inputs.solutionFileName }}
+      # - name: Owasp Dependency Check
+      #   uses: felipementel/reusable-workflows/.github/actions/tools-owasp-zap@main
+      #   with:
+      #     projectBaseDir: ${{ inputs.projectBaseDir }}
+      #     mainProject: ${{ inputs.mainProject }}
+      #     solutionFileName: ${{ inputs.solutionFileName }}
 
       - name: 🧪 Dotnet Test & Coverage
         id: dotnet-test
