@@ -122,7 +122,16 @@ runs:
       run: |
         echo "### 🔍 Trivy Security Scan" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "- **Image:** \`${{ inputs.image-ref }}\`" >> $GITHUB_STEP_SUMMARY
+        if [ "${{ inputs.scan-type }}" == "image" ]; then
+          echo "- **Scan Type:** Image Vulnerability Scan" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image:** \`${{ inputs.image-ref }}\`" >> $GITHUB_STEP_SUMMARY
+        elif [ "${{ inputs.scan-type }}" == "fs" ]; then
+          echo "- **Scan Type:** Filesystem Scan" >> $GITHUB_STEP_SUMMARY
+        elif [ "${{ inputs.scan-type }}" == "license" ]; then
+          echo "- **Scan Type:** License Compliance Scan" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "- **Scan Type:** Unknown" >> $GITHUB_STEP_SUMMARY
+        fi
         echo "- **Severity:** \`${{ inputs.severity }}\`" >> $GITHUB_STEP_SUMMARY
         echo "- **Format:** \`${{ inputs.format }}\`" >> $GITHUB_STEP_SUMMARY
         echo "- **Output:** \`${{ inputs.output-file }}\`" >> $GITHUB_STEP_SUMMARY
