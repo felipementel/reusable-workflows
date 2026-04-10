@@ -154,7 +154,7 @@ jobs:
           $DOTNET_ROOT/dotnet --info
 
       - name: 🧱📤 Git Leaks
-        uses: felipementel/reusable-workflows/.github/actions/git-leaks@main
+        uses: felipementel/reusable-workflows/.github/actions/tools-git-leaks@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           gitleaks-license: ${{ secrets.GITLEAKS_LICENSE }}
@@ -177,7 +177,7 @@ jobs:
           run-id: ${{ github.run_id }}
 
       - name: 📸 SonarCloud Analysis
-        uses: felipementel/reusable-workflows/.github/actions/sonar-cloud@main
+        uses: felipementel/reusable-workflows/.github/actions/tools-sonar-cloud@main
         with:
           has-tests: ${{ steps.dotnet-test.outputs.has-tests }}
           sonar-project-key: ${{ secrets.SONAR_PROJECT_KEY }}
@@ -202,7 +202,7 @@ jobs:
 
       # Trivy no source/repo SAST scan (vulnerabilities, secrets, misconfigurations)
       - name: 🔎 Trivy - Filesystem Scan (vuln, secret, misconfig)
-        uses: felipementel/reusable-workflows/.github/actions/trivy-scan@main
+        uses: felipementel/reusable-workflows/.github/actions/tools-trivy-scan@main
         with:
           scan-type: 'fs'
           scan-ref: '${{ env.working_directory }}'
@@ -214,7 +214,7 @@ jobs:
           trivyignores: ${{ steps.check-trivyignore.outputs.path }}
 
       - name: 🔎 Trivy - license scan
-        uses: felipementel/reusable-workflows/.github/actions/trivy-scan@main
+        uses: felipementel/reusable-workflows/.github/actions/tools-trivy-scan@main
         with:
           scan-type: 'fs'
           scan-ref: '${{ env.working_directory }}'
