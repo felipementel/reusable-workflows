@@ -34,28 +34,28 @@ runs:
       run: |
         dotnet restore \
           ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
-        dotnet build \
-          ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj \
-          --no-restore \
-          --output ./output_build
+      # dotnet build \
+      #   ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj \
+      #   --no-restore \
+      #   --output ./output_build
 
     - name: 🍵 Snyk Setup
       uses: snyk/actions/setup@master
 
-    - name: 🍵 Build a Docker image
-      shell: bash
-      run: |
-        docker buildx build \
-          -t felipementel/${{ inputs.imageName }} \
-          -f ${{ inputs.docker-file-fullpath }} \
-          ${{ inputs.docker-build-context  }}
+    # - name: 🍵 Build a Docker image
+    #   shell: bash
+    #   run: |
+    #     docker buildx build \
+    #       -t felipementel/${{ inputs.imageName }} \
+    #       -f ${{ inputs.docker-file-fullpath }} \
+    #       ${{ inputs.docker-build-context  }}
 
     - name: 🍵 Snyk Container Monitor
       shell: bash
       env:
         SNYK_TOKEN: ${{ inputs.snyk-token }}
       run: |
-        snyk container monitor felipementel/${{ inputs.imageName }} \
+        snyk container monitor ${{ inputs.imageName }} \
           --exclude-base-image-vulns \
           --file=${{ inputs.docker-file-fullpath }}
 
