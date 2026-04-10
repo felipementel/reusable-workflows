@@ -47,8 +47,8 @@ runs:
       run: |
         docker buildx build \
           -t felipementel/${{ inputs.imageName }} \
-          -f ${{ inputs.docker-file-fullpath || inputs.projectBaseDir + '/' + inputs.mainProject + '/Dockerfile' }} \
-          ${{ inputs.docker-build-context || inputs.projectBaseDir }}
+          -f ${{ inputs.docker-file-fullpath }} \
+          ${{ inputs.docker-build-context  }}
 
     - name: 🍵 Snyk Container Monitor
       shell: bash
@@ -57,7 +57,7 @@ runs:
       run: |
         snyk container monitor felipementel/${{ inputs.imageName }} \
           --exclude-base-image-vulns \
-          --file=${{ inputs.docker-file-fullpath || inputs.projectBaseDir + '/' + inputs.mainProject + '/Dockerfile' }}
+          --file=${{ inputs.docker-file-fullpath }}
 
     - name: 🍵 Run Snyk to check for vulnerabilities
       uses: snyk/actions/dotnet@master
