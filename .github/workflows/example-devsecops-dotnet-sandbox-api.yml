@@ -192,7 +192,7 @@ jobs:
           java-distro: ${{ env.javaDistro }}
 
       - name: 🍵 Snyk Security Scan
-        uses: felipementel/reusable-workflows/.github/actions/tools-snyk@main
+        uses: felipementel/reusable-workflows/.github/actions/tools-snyk-dotnet@main
         with:
           snyk-token: ${{ secrets.SNYK_TOKEN }}
           projectBaseDir: ${{ inputs.projectBaseDir }}
