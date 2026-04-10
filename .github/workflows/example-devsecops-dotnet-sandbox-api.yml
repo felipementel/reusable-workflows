@@ -82,6 +82,9 @@ on:
       SONAR_TOKEN:
         required: true
         description: 'Sonar Token'
+      SAFETY_API_KEY:
+        required: true
+        description: 'Safety API Key'
 env:
   RED: '\033[0;31m'
   GREEN: '\033[0;32m'
