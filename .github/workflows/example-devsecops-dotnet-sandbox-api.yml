@@ -79,7 +79,7 @@ on:
         description: 'Docker build context (e.g. src/Project/Project or .)'
         required: false
         default: ''
-      docker-setup:
+      dockerSetup:
         type: boolean
         description: 'Whether to set up Docker for the Snyk container scan'
         required: false
@@ -182,7 +182,7 @@ jobs:
       #     solutionFileName: ${{ inputs.solutionFileName }}
 
       - name: 🐋 Docker setup
-        if: ${{ inputs.docker-setup == 'true' }}
+        if: ${{ inputs.dockerSetup == 'true' }}
         uses: felipementel/reusable-workflows/.github/actions/tools-docker-setup@main
 
       - name: 🧪 Dotnet Test & Coverage
@@ -230,7 +230,7 @@ jobs:
       - name: Safety Python Dependency Check
         uses: felipementel/reusable-workflows/.github/actions/tools-safety@main
         with:
-          safety-api-key: ${{ secrets.SAFETY_API_KEY }}
+          api-key: ${{ secrets.SAFETY_API_KEY }}
           projectBaseDir: ${{ inputs.projectBaseDir }}
           mainProject: ${{ inputs.mainProject }}
           solutionFileName: ${{ inputs.solutionFileName }}
