@@ -1,0 +1,72 @@
+name: Python Code Quality
+description: Run flake8, black, isort, mypy and compileall checks
+
+inputs:
+  app_dir:
+    description: 'Application source directory (e.g. src)'
+    required: false
+    default: 'src'
+
+runs:
+  using: 'composite'
+  steps:
+
+    - run: echo -e ${GREEN} "Running flake8..."
+      shell: bash
+
+    - name: Code Quality - flake8
+      shell: bash
+      run: |        
+        if [ -d "tests" ]; then
+          flake8 ${{ inputs.app_dir }} tests
+        else
+          flake8 ${{ inputs.app_dir }}
+        fi
+
+    - run: echo -e ${GREEN} "Running black..."
+      shell: bash
+
+    - name: Code Quality - black
+      shell: bash
+      run: |
+        BLACK_CONFIG_ARGS=""
+        if [ -f "pyproject.toml" ]; then
+          echo "Using pyproject.toml for black configuration"
+          BLACK_CONFIG_ARGS="--config pyproject.toml"
+        else
+          echo "Using default black configuration"
+          BLACK_CONFIG_ARGS="--line-length 100"
+        fi
+        if [ -d "tests" ]; then
+          black --check $BLACK_CONFIG_ARGS ${{ inputs.app_dir }} tests
+        else
+          black --check $BLACK_CONFIG_ARGS ${{ inputs.app_dir }}
+        fi
+
+    - run: echo -e ${GREEN} "Running isort..."
+      shell: bash
+
+    - name: Code Quality - isort
+      shell: bash
+      run: |        
+        if [ -d "tests" ]; then
+          isort --check-only ${{ inputs.app_dir }} tests
+        else
+          isort --check-only ${{ inputs.app_dir }}
+        fi
+
+    - run: echo -e ${GREEN} "Running mypy..."
+      shell: bash
+
+    - name: Code Quality - mypy
+      shell: bash
+      run: |
+        mypy ${{ inputs.app_dir }}
+
+    - run: echo -e ${GREEN} "Running compileall..."
+      shell: bash
+
+    - name: Code Quality - compileall
+      shell: bash
+      run: |
+        python -m compileall ${{ inputs.app_dir }} -q

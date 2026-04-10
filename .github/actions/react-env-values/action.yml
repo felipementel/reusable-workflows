@@ -1,0 +1,37 @@
+name: 'Create .env for Admin Plataforma'
+description: 'Creates .env file with Admin Plataforma specific environment variables'
+author: 'GreenNexus-Core'
+
+inputs:
+  working_directory:
+    description: 'Working directory where .env file will be created'
+    required: true
+    default: './source'
+  environment:
+    description: 'Environment name (DEV, HML, PRD)'
+    required: true
+    default: 'DEV'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Create .env file for Admin Plataforma
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      run: |
+        echo "🔧 Creating .env file for Admin Plataforma..."
+        cat > .env <<EOF
+        # ==========================================
+        # gn-web-admin-plataforma - Build Environment: ${{ inputs.environment }}
+        # ==========================================
+
+        # --- Admin Plataforma APIs ---
+        VITE_API_PROPERTY_URL=${VITE_API_PROPERTY_URL}
+        VITE_API_AUTH_URL=${VITE_API_AUTH_URL}
+        VITE_DEBUG=${VITE_DEBUG}
+        VITE_APPLICATIONINSIGHTS_CONNECTION_STRING=${VITE_APPLICATIONINSIGHTS_CONNECTION_STRING}
+        EOF
+
+        echo "✅ .env file created for Admin Plataforma"
+        echo "📋 Content:"
+        cat .env

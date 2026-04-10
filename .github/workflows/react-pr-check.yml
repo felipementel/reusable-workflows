@@ -1,0 +1,349 @@
+name: Pull Request Validation - React
+
+on:
+  workflow_call:
+    inputs:
+      node_version:
+        description: 'Node.js version to use'
+        required: false
+        type: string
+        default: '24.x'
+      working_directory:
+        description: 'Working directory where package.json is located'
+        required: false
+        type: string
+        default: './source'
+      sparse_checkout:
+        description: 'Sparse checkout pattern'
+        required: false
+        type: string
+        default: 'source/'
+      environment:
+        description: 'Environment to use for variables (DEV, HML, PRD)'
+        required: false
+        type: string
+        default: 'DEV'
+  workflow_dispatch:
+    inputs:
+      node_version:
+        description: 'Node.js version to use'
+        required: false
+        type: string
+        default: '24.x'
+      working_directory:
+        description: 'Working directory where package.json is located'
+        required: false
+        type: string
+        default: './source'
+      sparse_checkout:
+        description: 'Sparse checkout pattern'
+        required: false
+        type: string
+        default: 'source/'
+      environment:
+        description: 'Environment to use for variables (DEV, HML, PRD)'
+        required: false
+        type: string
+        default: 'DEV'
+      git_leaks:
+        description: 'Enable Gitleaks security scan'
+        required: false
+        type: boolean
+        default: true
+
+env:
+  # Colors for output
+  RED: '\033[0;31m'
+  GREEN: '\033[0;32m'
+  YELLOW: '\033[0;33m'
+  BLUE: '\033[0;34m'
+  RESET: '\033[0m'
+  BOLD: '\033[1m'
+  BOLD_GREEN: '\033[1;32m'
+  BOLD_YELLOW: '\033[1;33m'
+
+  # FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+  build-and-test:
+    name: Build and Test React Web
+    environment: ${{ inputs.environment }}
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+    runs-on: self-hosted
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      security-events: write
+      pull-requests: read
+      statuses: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+          sparse-checkout: |
+            ${{ inputs.sparse_checkout }}
+          sparse-checkout-cone-mode: false
+
+      - name: 🏷️ Set Badge to Running
+        if: ${{ !(github.event_name == 'pull_request' && github.actor == 'dependabot[bot]') }}
+        uses: GreenNexus-Core/gh-actions/.github/actions/update-badge-gist@main
+        with:
+          gist_id: ${{ vars.BADGE_GIST_ID }}
+          gist_token: ${{ secrets.BADGE_GIST_TOKEN }}
+          badge_type: pr
+          build_status: running
+
+      - name: 🧱📤 Git Leaks
+        if: ${{ !(github.event_name == 'pull_request' && github.actor == 'dependabot[bot]') }}
+        uses: GreenNexus-Core/gh-actions/.github/actions/git-leaks@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          gitleaks-license: ${{ secrets.GITLEAKS_LICENSE }}
+          enable-summary: 'true'
+          enable-upload-artifact: 'true'
+          notify-user-list: '@felipementel'
+
+      # - name: 🔍 Check trivyignore
+      #   id: check-trivyignore
+      #   shell: bash
+      #   run: |
+      #     if [ -f .trivyignore.yaml ]; then
+      #       echo -e "${GREEN} ✅ .trivyignore.yaml encontrado"
+      #       echo "path=.trivyignore.yaml" >> "$GITHUB_OUTPUT"
+      #     else
+      #       echo -e "${YELLOW} ℹ️ .trivyignore.yaml não encontrado, ignorefile não será usado"
+      #       echo "path=" >> "$GITHUB_OUTPUT"
+      #     fi
+
+      # Trivy no source/repo SAST scan (vulnerabilities, secrets, misconfigurations)
+      - name: 🔎 Trivy - Filesystem Scan (vuln, secret, misconfig)
+        uses: GreenNexus-Core/gh-actions/.github/actions/trivy-scan@main
+        with:
+          scan-type: 'fs'
+          scan-ref: '${{ env.working_directory }}'
+          scanners: 'vuln,misconfig,secret'
+          format: 'github'
+          severity: 'MEDIUM,HIGH,CRITICAL'
+          ignore-unfixed: true
+          trivyignores: ${{ hashFiles('.trivyignore.yaml') != '' && '.trivyignore.yaml' || '' }}
+          exit-code: '1'
+
+      - name: 🔎 Trivy - License Scan
+        uses: GreenNexus-Core/gh-actions/.github/actions/trivy-scan@main
+        with:
+          scan-type: 'fs'
+          scan-ref: '${{ env.working_directory }}'
+          scanners: 'license'
+          format: 'github'
+          severity: 'MEDIUM,HIGH,CRITICAL'
+          ignore-unfixed: true
+          trivyignores: ${{ hashFiles('.trivyignore.yaml') != '' && '.trivyignore.yaml' || '' }}
+          exit-code: '1'
+
+      - name: 🏷️ Extract Application Version
+        uses: GreenNexus-Core/gh-actions/.github/actions/react-get-package-data@main
+        id: get-package-data
+        with:
+          environment: ${{ inputs.environment }}
+          working_directory: ${{ inputs.working_directory }}
+
+      - name: 🔍 Check if tag already exists
+        uses: GreenNexus-Core/gh-actions/.github/actions/check-tag-exists@main
+        with:
+          tag: ${{ steps.get-package-data.outputs.TAG }}
+          version_file: package.json
+
+      - name: Setup Node ${{ inputs.node_version }} (with npm cache)
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ inputs.node_version }}
+          cache: 'npm'
+          cache-dependency-path: '${{ inputs.working_directory }}/package-lock.json'
+
+      - name: Show npm version
+        run: npm --version
+        working-directory: ${{ inputs.working_directory }}
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            echo -e "${GREEN} ✅ package-lock.json encontrado: usando ci"
+            npm ci
+          else
+            echo -e "${YELLOW} ⚠️ package-lock.json ausente: usando install"
+            npm install
+          fi
+        working-directory: ${{ inputs.working_directory }}
+
+      - name: 🔍 npm audit (dependency vulnerabilities)
+        run: |
+          echo "🔍 Checking for known vulnerabilities in dependencies..."
+          npm audit --audit-level=high || echo -e " ${YELLOW} ⚠️ npm audit found vulnerabilities (non-blocking)"
+        working-directory: ${{ inputs.working_directory }}
+
+      - name: Run ESLint
+        run: npm run lint || echo -e " ${YELLOW} ⚠️ ESLint warnings (não bloqueou)"
+        working-directory: ${{ inputs.working_directory }}
+
+      - name: Check formatting (Prettier)
+        run: npx prettier --check "src/**/*.{ts,tsx,js,jsx,css}"
+        working-directory: ${{ inputs.working_directory }}
+
+      # ENV para o Data Processor
+      - name: Create .env for Data Processor
+        if: github.repository == 'GreenNexus-Core/gn-web-data-processor'
+        uses: GreenNexus-Core/gh-actions/.github/actions/react-env-data-processor@main
+        env:
+          VITE_ADMIN_API_URL: ${{ vars.VITE_ADMIN_API_URL }}
+          VITE_AUTH_API_URL: ${{ vars.VITE_AUTH_API_URL }}
+          VITE_AUTH_API_KEY: ${{ secrets.VITE_AUTH_API_KEY }}
+          VITE_INGEST_SHP_API_URL: ${{ vars.VITE_INGEST_SHP_API_URL }}
+          VITE_CAR_DP_API_URL: ${{ vars.VITE_CAR_DP_API_URL }}
+          VITE_SNCR_DP_API_URL: ${{ vars.VITE_SNCR_DP_API_URL }}
+          VITE_CAFIR_DP_API_URL: ${{ vars.VITE_CAFIR_DP_API_URL }}
+          VITE_TILES_DP_API_URL: ${{ vars.VITE_TILES_DP_API_URL }}
+          VITE_ANALYTICS_DP_API_URL: ${{ vars.VITE_ANALYTICS_DP_API_URL }}
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+          VITE_ORCHESTRATOR_API_URL: ${{ vars.VITE_ORCHESTRATOR_API_URL }}
+          VITE_APPLICATION_ID: ${{ vars.VITE_APPLICATION_ID }}
+          VITE_APPLICATIONINSIGHTS_CONNECTION_STRING: ${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}
+        with:
+          working_directory: ${{ inputs.working_directory }}
+          environment: ${{ inputs.environment }}
+
+      # ENV para o Admin Plataforma
+      - name: Create .env for Admin Plataforma
+        if: github.repository == 'GreenNexus-Core/gn-web-admin-plataforma'
+        uses: GreenNexus-Core/gh-actions/.github/actions/react-env-admin-plataforma@main
+        env:
+          VITE_API_AUTH_URL: ${{ vars.VITE_API_AUTH_URL }}
+          VITE_API_PROPERTY_URL: ${{ vars.VITE_API_PROPERTY_URL }}
+          VITE_DEBUG: ${{ vars.VITE_DEBUG }}
+          VITE_APPLICATIONINSIGHTS_CONNECTION_STRING: ${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}
+        with:
+          working_directory: ${{ inputs.working_directory }}
+          environment: ${{ inputs.environment }}
+
+      # ENV para o Slider
+      - name: Create .env for Slider
+        if: github.repository == 'GreenNexus-Core/gn-web-slider'
+        uses: GreenNexus-Core/gh-actions/.github/actions/react-env-slider@main
+        env:
+          VITE_IMGS_BASE_URL: ${{ vars.VITE_IMGS_BASE_URL }}
+          AZURE_IMGS_CONTAINER_URL: ${{ vars.AZURE_IMGS_CONTAINER_URL }}
+          VITE_APPLICATIONINSIGHTS_CONNECTION_STRING: ${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}
+        with:
+          working_directory: ${{ inputs.working_directory }}
+          environment: ${{ inputs.environment }}
+
+      # ENV para o Plataforma (principal)
+      - name: Create .env for Plataforma
+        if: github.repository == 'GreenNexus-Core/gn-web-plataforma'
+        uses: GreenNexus-Core/gh-actions/.github/actions/react-env-plataforma@main
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_PROPERTY_SERVICE_URL: ${{ vars.VITE_PROPERTY_SERVICE_URL }}
+          VITE_AUTH_SERVICE_URL: ${{ vars.VITE_AUTH_SERVICE_URL }}
+          VITE_GEOSPATIAL_SERVICE_URL: ${{ vars.VITE_GEOSPATIAL_SERVICE_URL }}
+          VITE_API_GEO_SERVICES_URL: ${{ vars.VITE_API_GEO_SERVICES_URL }}
+          VITE_API_HUB_SERVICES_URL: ${{ vars.VITE_API_HUB_SERVICES_URL }}
+          VITE_MUNICIPALITIES_SERVICE_URL: ${{ vars.VITE_MUNICIPALITIES_SERVICE_URL }}
+          VITE_EMAIL_SERVICE_URL: ${{ vars.VITE_EMAIL_SERVICE_URL }}
+          VITE_HUB_SERVICE_URL: ${{ vars.VITE_HUB_SERVICE_URL }}
+          VITE_SSE_SERVICE_URL: ${{ vars.VITE_SSE_SERVICE_URL }}
+          VITE_TILES_SERVICE_URL: ${{ vars.VITE_TILES_SERVICE_URL }}
+          VITE_TILE_BASE_URL: ${{ vars.VITE_TILE_BASE_URL }}
+          VITE_TILE_VERSION: ${{ vars.VITE_TILE_VERSION }}
+          VITE_TILE_PROVIDER: ${{ vars.VITE_TILE_PROVIDER }}
+          VITE_TILE_SAS: ${{ vars.VITE_TILE_SAS }}
+          VITE_CORS_ENABLED: ${{ vars.VITE_CORS_ENABLED }}
+          VITE_CORS_ORIGINS: ${{ vars.VITE_CORS_ORIGINS }}
+          VITE_CORS_METHODS: ${{ vars.VITE_CORS_METHODS }}
+          VITE_CORS_ALLOWED_HEADERS: ${{ vars.VITE_CORS_ALLOWED_HEADERS }}
+          VITE_DEBUG: ${{ vars.VITE_DEBUG }}
+          VITE_DEBUG_VERBOSE: ${{ vars.VITE_DEBUG_VERBOSE }}
+          VITE_DEFAULT_LOCALE: ${{ vars.VITE_DEFAULT_LOCALE }}
+          VITE_ALLOWED_HOSTS: ${{ vars.VITE_ALLOWED_HOSTS }}
+          VITE_POLLING_INTERVAL_SECONDS: ${{ vars.VITE_POLLING_INTERVAL_SECONDS }}
+          VITE_APPLICATIONINSIGHTS_CONNECTION_STRING: ${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}
+        with:
+          working_directory: ${{ inputs.working_directory }}
+          environment: ${{ inputs.environment }}
+
+      - name: Create .env for Report Design
+        if: github.repository == 'GreenNexus-Core/gn-web-report-design'
+        uses: GreenNexus-Core/gh-actions/.github/actions/react-env-report-design@main
+        env:
+          VITE_REPORT_DESIGN_API_URL: ${{ vars.VITE_REPORT_DESIGN_API_URL }}
+          VITE_AUTH_SERVICE_URL: ${{ vars.VITE_AUTH_SERVICE_URL }}
+          VITE_APPLICATIONINSIGHTS_CONNECTION_STRING: ${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}
+        with:
+          working_directory: ${{ inputs.working_directory }}
+          environment: ${{ inputs.environment }}
+
+      - name: Build
+        run: npm run build
+        working-directory: ${{ inputs.working_directory }}
+
+      - name: Verify build output
+        run: |
+          test -d dist || (echo -e "${RED} ❌ dist não gerado" && exit 1)
+          test -f dist/index.html || (echo -e "${RED} ❌ index.html não encontrado" && exit 1)
+          echo -e "${GREEN} ✅ Build OK"
+          ls -la dist/
+        working-directory: ${{ inputs.working_directory }}
+
+      # Trivy no source/repo SAST scan (vulnerabilities, secrets, misconfigurations)
+      - name: 🔎 Trivy - filesystem scan vuln, secret, misconfig)
+        uses: GreenNexus-Core/gh-actions/.github/actions/trivy-scan@main
+        with:
+          scan-type: 'fs'
+          scan-ref: '${{ env.working_directory }}'
+          scanners: 'license'
+          format: 'table'
+          severity: 'HIGH,CRITICAL'
+          ignore-unfixed: true
+          exit-code: '1'
+          trivyignores: ${{ steps.check-trivyignore.outputs.path }}
+
+      - name: Summary
+        run: |
+          APP_VERSION=$(node -p "require('${{ inputs.working_directory }}/package.json').version")
+          echo "## ✅ Build Completed Successfully" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Version** | \`$APP_VERSION\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Branch** | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Environment** | \`${{ inputs.environment }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Node.js** | \`${{ inputs.node_version }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **npm** | \`$(npm --version)\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔍 Checks Performed:" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Dependencies installed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ npm audit (dependency vulnerabilities)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ ESLint executed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Prettier formatting check" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Build completed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Build output verified" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Trivy License Scan" >> $GITHUB_STEP_SUMMARY
+
+  update-pr-badge:
+    name: Update PR Badge
+    if: always()
+    needs: [build-and-test]
+    runs-on: self-hosted
+    steps:
+      - name: 🏷️ Update PR Badge Gist
+        uses: GreenNexus-Core/gh-actions/.github/actions/update-badge-gist@main
+        with:
+          gist_id: ${{ vars.BADGE_GIST_ID }}
+          gist_token: ${{ secrets.BADGE_GIST_TOKEN }}
+          badge_type: pr
+          build_status: ${{ needs.build-and-test.result }}

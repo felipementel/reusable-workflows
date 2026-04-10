@@ -1,0 +1,514 @@
+name: Frontend Build and Deploy
+
+on:
+  workflow_call:
+    inputs:
+      build_mode:
+        description: "Which action do you want?"
+        required: false
+        default: Build
+        type: string
+      node_version:
+        description: 'Node.js version to use'
+        required: false
+        type: string
+        default: '24.x'
+      working_directory:
+        description: 'Working directory where package.json is located'
+        required: false
+        type: string
+        default: './source'
+      app_location:
+        description: 'App location for Azure Static Web Apps'
+        required: false
+        type: string
+        default: './dist'
+      api_location:
+        description: 'API location for Azure Static Web Apps'
+        required: false
+        type: string
+        default: ''
+      output_location:
+        description: 'Output location for Azure Static Web Apps'
+        required: false
+        type: string
+        default: ''
+      environment:
+        description: 'Environment to deploy to'
+        required: false
+        type: string
+        default: 'DEV'
+      sparse_checkout:
+        description: 'Sparse checkout pattern'
+        required: false
+        type: string
+        default: 'source/'
+      url:
+        description: 'The URL of the application to scan (e.g. https://example.com)'
+        required: true
+        type: string
+        default: ''
+      allow_issue_writing:
+        description: 'Allow writing issues to the ZAP report (true/false)'
+        required: false
+        type: boolean
+        default: false
+      fail_action:
+        description: 'Fail the action if vulnerabilities are found (true/false)'
+        required: false
+        type: boolean
+        default: false
+      cmd_options:
+        description: 'Additional command options for the ZAP baseline scan (e.g. -a for active scan)'
+        required: false
+        type: string
+        default: '-a'
+
+env:
+  # Colors for output
+  RED: '\033[0;31m'
+  GREEN: '\033[0;32m'
+  YELLOW: '\033[0;33m'
+  BLUE: '\033[0;34m'
+  RESET: '\033[0m'
+  BOLD: '\033[1m'
+  BOLD_GREEN: '\033[1;32m'
+  BOLD_YELLOW: '\033[1;33m'
+
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+
+jobs:
+  build-and-test:
+    name: Build and Test React Web
+    environment: ${{ inputs.environment }}
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+    runs-on: self-hosted
+    outputs:
+      tag-version: ${{ steps.get-package-data.outputs.TAG }}
+      app-name: ${{ steps.get-package-data.outputs.APP_NAME }}
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      security-events: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+          sparse-checkout: |
+            ${{ inputs.sparse_checkout }}
+          sparse-checkout-cone-mode: false
+
+      - name: 🏷️ Set Badge to Running
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: GreenNexus-Core/gh-actions/.github/actions/update-badge-gist@main
+        with:
+          gist_id: ${{ vars.BADGE_GIST_ID }}
+          gist_token: ${{ secrets.BADGE_GIST_TOKEN }}
+          badge_type: cicd
+          build_status: running
+
+      - name: 🧱📤 Git Leaks
+        if: ${{ !(github.event_name == 'pull_request' && github.actor == 'dependabot[bot]') }}
+        uses: GreenNexus-Core/gh-actions/.github/actions/git-leaks@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          gitleaks-license: ${{ secrets.GITLEAKS_LICENSE }}
+          enable-summary: 'true'
+          enable-upload-artifact: 'true'
+          notify-user-list: '@felipementel'
+
+      # Trivy no source/repo SAST scan (vulnerabilities, secrets, misconfigurations)
+      - name: 🔎 Trivy - filesystem scan (deps, misconfig, secrets)
+        uses: GreenNexus-Core/gh-actions/.github/actions/trivy-scan@main
+        with:
+          scan-type: 'fs'
+          scan-ref: '${{ env.working_directory }}/dist'
+          scanners: 'vuln,misconfig,secret'
+          format: 'github'
+          severity: 'MEDIUM,HIGH,CRITICAL'
+          ignore-unfixed: true
+          exit-code: '1'
+          trivyignores: ${{ steps.check-trivyignore.outputs.path }}
+
+      - name: 🔎 Trivy - license scan
+        uses: GreenNexus-Core/gh-actions/.github/actions/trivy-scan@main
+        with:
+          scan-type: 'fs'
+          scan-ref: '${{ env.working_directory }}'
+          scanners: 'license'
+          format: 'table'
+          severity: 'MEDIUM,HIGH,CRITICAL'
+          ignore-unfixed: true
+          exit-code: '1'
+          trivyignores: ${{ steps.check-trivyignore.outputs.path }}
+
+      - name: 🏷️ Extract Application Version
+        uses: GreenNexus-Core/gh-actions/.github/actions/react-get-package-data@main
+        id: get-package-data
+        with:
+          environment: ${{ inputs.environment }}
+          working_directory: ${{ inputs.working_directory }}
+
+      - name: Setup Node ${{ inputs.node_version }} (with npm cache)
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ inputs.node_version }}
+          cache: 'npm'
+          cache-dependency-path: '${{ inputs.working_directory }}/package-lock.json'
+
+      - name: Show npm version
+        run: npm --version
+        working-directory: ${{ inputs.working_directory }}
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            echo -e "✅${GREEN} package-lock.json encontrado: usando ci"
+            npm ci
+          else
+            echo -e "⚠️${YELLOW} package-lock.json ausente: usando install"
+            npm install
+          fi
+        working-directory: ${{ inputs.working_directory }}
+
+      - name: 🔍 npm audit (dependency vulnerabilities)
+        run: |
+          echo "🔍 Checking for known vulnerabilities in dependencies..."
+          npm audit --audit-level=high || echo -e "⚠️${YELLOW} npm audit found vulnerabilities (non-blocking)"
+        working-directory: ${{ inputs.working_directory }}
+
+      - name: Run ESLint
+        run: npm run lint || echo -e "⚠️${YELLOW} ESLint warnings (não bloqueou)"
+        working-directory: ${{ inputs.working_directory }}
+
+      - name: Check formatting (Prettier)
+        run: npx prettier --check "src/**/*.{ts,tsx,js,jsx,css}" || echo -e "⚠️${YELLOW} Prettier encontrou arquivos não formatados"
+        working-directory: ${{ inputs.working_directory }}
+
+      # ENV para o Data Processor
+      - name: Create .env for Data Processor
+        if: github.repository == 'GreenNexus-Core/gn-web-data-processor'
+        uses: GreenNexus-Core/gh-actions/.github/actions/react-env-data-processor@main
+        env:
+          VITE_ADMIN_API_URL: ${{ vars.VITE_ADMIN_API_URL }}
+          VITE_AUTH_API_URL: ${{ vars.VITE_AUTH_API_URL }}
+          VITE_AUTH_API_KEY: ${{ secrets.VITE_AUTH_API_KEY }}
+          VITE_INGEST_SHP_API_URL: ${{ vars.VITE_INGEST_SHP_API_URL }}
+          VITE_CAR_DP_API_URL: ${{ vars.VITE_CAR_DP_API_URL }}
+          VITE_SNCR_DP_API_URL: ${{ vars.VITE_SNCR_DP_API_URL }}
+          VITE_CAFIR_DP_API_URL: ${{ vars.VITE_CAFIR_DP_API_URL }}
+          VITE_TILES_DP_API_URL: ${{ vars.VITE_TILES_DP_API_URL }}
+          VITE_ANALYTICS_DP_API_URL: ${{ vars.VITE_ANALYTICS_DP_API_URL }}
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+          VITE_ORCHESTRATOR_API_URL: ${{ vars.VITE_ORCHESTRATOR_API_URL }}
+          VITE_APPLICATION_ID: ${{ vars.VITE_APPLICATION_ID }}
+          VITE_APPLICATIONINSIGHTS_CONNECTION_STRING: ${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}
+        with:
+          working_directory: ${{ inputs.working_directory }}
+          environment: ${{ inputs.environment }}
+
+      # ENV para o Admin Plataforma
+      - name: Create .env for Admin Plataforma
+        if: github.repository == 'GreenNexus-Core/gn-web-admin-plataforma'
+        uses: GreenNexus-Core/gh-actions/.github/actions/react-env-admin-plataforma@main
+        env:
+          VITE_API_AUTH_URL: ${{ vars.VITE_API_AUTH_URL }}
+          VITE_API_PROPERTY_URL: ${{ vars.VITE_API_PROPERTY_URL }}
+          VITE_DEBUG: ${{ vars.VITE_DEBUG }}
+          VITE_APPLICATIONINSIGHTS_CONNECTION_STRING: ${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}
+        with:
+          working_directory: ${{ inputs.working_directory }}
+          environment: ${{ inputs.environment }}
+
+      # ENV para o Slider
+      - name: Create .env for Slider
+        if: github.repository == 'GreenNexus-Core/gn-web-slider'
+        uses: GreenNexus-Core/gh-actions/.github/actions/react-env-slider@main
+        env:
+          VITE_IMGS_BASE_URL: ${{ vars.VITE_IMGS_BASE_URL }}
+          AZURE_IMGS_CONTAINER_URL: ${{ vars.AZURE_IMGS_CONTAINER_URL }}
+          VITE_APPLICATIONINSIGHTS_CONNECTION_STRING: ${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}
+        with:
+          working_directory: ${{ inputs.working_directory }}
+          environment: ${{ inputs.environment }}
+
+      # ENV para o Plataforma (principal)
+      - name: Create .env for Plataforma
+        if: github.repository == 'GreenNexus-Core/gn-web-plataforma'
+        uses: GreenNexus-Core/gh-actions/.github/actions/react-env-plataforma@main
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_PROPERTY_SERVICE_URL: ${{ vars.VITE_PROPERTY_SERVICE_URL }}
+          VITE_AUTH_SERVICE_URL: ${{ vars.VITE_AUTH_SERVICE_URL }}
+          VITE_GEOSPATIAL_SERVICE_URL: ${{ vars.VITE_GEOSPATIAL_SERVICE_URL }}
+          VITE_API_GEO_SERVICES_URL: ${{ vars.VITE_API_GEO_SERVICES_URL }}
+          VITE_API_HUB_SERVICES_URL: ${{ vars.VITE_API_HUB_SERVICES_URL }}
+          VITE_MUNICIPALITIES_SERVICE_URL: ${{ vars.VITE_MUNICIPALITIES_SERVICE_URL }}
+          VITE_EMAIL_SERVICE_URL: ${{ vars.VITE_EMAIL_SERVICE_URL }}
+          VITE_HUB_SERVICE_URL: ${{ vars.VITE_HUB_SERVICE_URL }}
+          VITE_SSE_SERVICE_URL: ${{ vars.VITE_SSE_SERVICE_URL }}
+          VITE_TILES_SERVICE_URL: ${{ vars.VITE_TILES_SERVICE_URL }}
+          VITE_TILE_BASE_URL: ${{ vars.VITE_TILE_BASE_URL }}
+          VITE_TILE_VERSION: ${{ vars.VITE_TILE_VERSION }}
+          VITE_TILE_PROVIDER: ${{ vars.VITE_TILE_PROVIDER }}
+          VITE_TILE_SAS: ${{ vars.VITE_TILE_SAS }}
+          VITE_CORS_ENABLED: ${{ vars.VITE_CORS_ENABLED }}
+          VITE_CORS_ORIGINS: ${{ vars.VITE_CORS_ORIGINS }}
+          VITE_CORS_METHODS: ${{ vars.VITE_CORS_METHODS }}
+          VITE_CORS_ALLOWED_HEADERS: ${{ vars.VITE_CORS_ALLOWED_HEADERS }}
+          VITE_DEBUG: ${{ vars.VITE_DEBUG }}
+          VITE_DEBUG_VERBOSE: ${{ vars.VITE_DEBUG_VERBOSE }}
+          VITE_DEFAULT_LOCALE: ${{ vars.VITE_DEFAULT_LOCALE }}
+          VITE_POLLING_INTERVAL_SECONDS: ${{ vars.VITE_POLLING_INTERVAL_SECONDS }}
+          VITE_APPLICATIONINSIGHTS_CONNECTION_STRING: ${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}
+        with:
+          working_directory: ${{ inputs.working_directory }}
+          environment: ${{ inputs.environment }}
+
+      - name: Create .env for Report Design
+        if: github.repository == 'GreenNexus-Core/gn-web-report-design'
+        uses: GreenNexus-Core/gh-actions/.github/actions/react-env-report-design@main
+        env:
+          VITE_REPORT_DESIGN_API_URL: ${{ vars.VITE_REPORT_DESIGN_API_URL }}
+          VITE_AUTH_SERVICE_URL: ${{ vars.VITE_AUTH_SERVICE_URL }}
+          VITE_APPLICATIONINSIGHTS_CONNECTION_STRING: ${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}
+        with:
+          working_directory: ${{ inputs.working_directory }}
+          environment: ${{ inputs.environment }}
+
+      - name: Build
+        run: |
+          # Seleciona o script de build baseado no environment
+          case "${{ inputs.environment }}" in
+            "DEV")
+              echo -e "🏗️${GREEN} Building for DEVELOPMENT environment..."
+              npm run build:dev
+              ;;
+            "HML")
+              echo -e "🏗️${GREEN} Building for STAGING environment..."
+              npm run build:staging
+              ;;
+            "PRD")
+              echo -e "🏗️${GREEN} Building for PRODUCTION environment..."
+              npm run build:production
+              ;;
+            *)
+              echo -e "🏗️${GREEN} Building with default mode (production)..."
+              npm run build
+              ;;
+          esac
+        working-directory: ${{ inputs.working_directory }}
+
+      - name: Verify build output
+        run: |
+          test -d dist || (echo -e "${RED} ❌ dist não gerado" && exit 1)
+          test -f dist/index.html || (echo -e "${RED} ❌ index.html não encontrado" && exit 1)
+          echo -e "${GREEN} ✅ Build OK"
+          ls -la dist/
+        working-directory: ${{ inputs.working_directory }}
+
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v7
+        with:
+          name: static-website
+          path: ${{ inputs.working_directory }}/dist
+          retention-days: 1
+
+      - name: Generate git tag
+        run: |
+          echo "TAG_NAME=v${{ steps.get-package-data.outputs.TAG }}"
+          git tag -a v${{ steps.get-package-data.outputs.TAG }} -m "Release v${{ steps.get-package-data.outputs.TAG }} at $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          git push origin v${{ steps.get-package-data.outputs.TAG }}
+        continue-on-error: true
+
+      - name: Summary
+        run: |
+          APP_VERSION=$(node -p "require('${{ inputs.working_directory }}/package.json').version")
+          echo "## ✅ Build Completed Successfully" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Version** | \`$APP_VERSION\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Branch** | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Environment** | \`${{ inputs.environment }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Node.js** | \`${{ inputs.node_version }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **npm** | \`$(npm --version)\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔍 Checks Performed:" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Dependencies installed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ npm audit (dependency vulnerabilities)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ ESLint executed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Build completed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Build output verified" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Trivy License Scan" >> $GITHUB_STEP_SUMMARY
+
+  deploy:
+    if: ${{ inputs.build_mode == 'Build + Deploy' }}
+    name: Deploy to Azure
+    runs-on: self-hosted
+    needs: build-and-test
+    timeout-minutes: 20
+    environment: ${{ inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v8
+        with:
+          name: static-website
+          path: ./dist
+
+      - name: 🔐 Azure CLI Login
+        uses: azure/login@v3
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          enable-AzPSSession: false
+          allow-no-subscriptions: true
+
+      - name: 🧩 Generate dist/config.json from Azure SWA App Settings
+        shell: bash
+        env:
+          AZURE_STATIC_WEBAPP_NAME: ${{ vars.AZURE_STATIC_WEBAPP_NAME }}
+          AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+        run: |
+          set -euo pipefail
+
+          CONFIG_PATH="./dist/config.json"
+          if [ ! -f "$CONFIG_PATH" ]; then
+            echo -e "${YELLOW} ℹ️ No dist/config.json found; skipping runtime config injection."
+            exit 0
+          fi
+
+          if ! grep -q '{{' "$CONFIG_PATH"; then
+            echo -e "${GREEN} ✅ dist/config.json has no placeholders; nothing to inject."
+            exit 0
+          fi
+
+          if [ -z "${AZURE_STATIC_WEBAPP_NAME:-}" ] || [ -z "${AZURE_RESOURCE_GROUP:-}" ]; then
+            echo -e "${RED} ❌ dist/config.json still has placeholders, but AZURE_STATIC_WEBAPP_NAME/AZURE_RESOURCE_GROUP are not set as GitHub Environment variables."
+            echo -e "${YELLOW} ➡️ Define vars.AZURE_STATIC_WEBAPP_NAME and vars.AZURE_RESOURCE_GROUP in the GitHub Environment used by this deployment (DEV/HML/PRD)."
+            exit 1
+          fi
+
+          echo -e "${BLUE} 🔄 Fetching app settings from Azure Static Web App '$AZURE_STATIC_WEBAPP_NAME' in RG '$AZURE_RESOURCE_GROUP'..."
+          az staticwebapp appsettings list \
+            -n "$AZURE_STATIC_WEBAPP_NAME" \
+            -g "$AZURE_RESOURCE_GROUP" \
+            -o json > ./swa-appsettings.json
+
+          node - <<'NODE'
+          const fs = require('fs');
+
+          const configPath = './dist/config.json';
+          const template = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+          const settingsRaw = JSON.parse(fs.readFileSync('./swa-appsettings.json', 'utf8'));
+          const settings = settingsRaw?.properties ?? settingsRaw;
+
+          const requiredKeys = Object.keys(template);
+          const missing = [];
+          const output = {};
+
+          for (const key of requiredKeys) {
+            const value = settings?.[key];
+            if (typeof value !== 'string' || value.trim() === '') {
+              missing.push(key);
+              continue;
+            }
+            output[key] = value;
+          }
+
+          if (missing.length) {
+            console.error('❌ Missing required Azure SWA app settings:', missing.join(', '));
+            process.exit(1);
+          }
+
+          fs.writeFileSync(configPath, JSON.stringify(output, null, 2));
+          console.log('✅ Wrote runtime config to', configPath);
+          NODE
+
+      - name: 🚀 Deploy to Azure Static Web Apps
+        id: swa-deploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }} # ${{ github.token }}
+          action: "upload"
+          app_location: ${{ inputs.app_location }}
+          # api_location: ${{ inputs.api_location }}
+          output_location: ${{ inputs.output_location }}
+          skip_app_build: true
+
+      # DAST/passive scan no site publicado
+      - name: 🕷️ OWASP ZAP Baseline
+        uses: GreenNexus-Core/gh-actions/.github/actions/owasp-zap@main
+        with:
+          url: ${{ inputs.url }}
+          allow_issue_writing: ${{ inputs.allow_issue_writing }}
+          fail_action: ${{ inputs.fail_action }}
+          cmd_options: ${{ inputs.cmd_options }}
+          artifact_name: zap-baseline-report-${{ inputs.environment }}-${{ steps.get-package-data.outputs.APP_NAME }}
+
+      - name: Deploy Summary
+        run: |
+          echo "## 🚀 Deploy Completed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Environment** | \`${{ inputs.environment }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Branch** | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- 🌍 Site publicado: ${{ steps.swa-deploy.outputs.static_web_app_url }}" >> $GITHUB_STEP_SUMMARY
+
+  update-cicd-badge:
+    name: Update CI/CD Badge
+    if: ${{ always() && github.ref == 'refs/heads/main' }}
+    needs: [build-and-test, deploy]
+    runs-on: self-hosted
+    steps:
+      - name: 🔍 Checkout (package.json only)
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            ${{ inputs.working_directory }}/package.json
+          sparse-checkout-cone-mode: false
+
+      - name: Setup Node ${{ inputs.node_version }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ inputs.node_version }}
+
+      - name: 🔍 Determine pipeline result
+        id: result
+        shell: bash
+        run: |
+          BUILD="${{ needs.build-and-test.result }}"
+          DEPLOY="${{ needs.deploy.result }}"
+
+          echo "build=${BUILD} deploy=${DEPLOY}"
+
+          if [[ "$BUILD" == "failure" || "$DEPLOY" == "failure" ]]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
+          elif [[ "$BUILD" == "cancelled" || "$DEPLOY" == "cancelled" ]]; then
+            echo "status=cancelled" >> $GITHUB_OUTPUT
+          else
+            echo "status=success" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 🏷️ Update Badge Gist
+        uses: GreenNexus-Core/gh-actions/.github/actions/update-badge-gist@main
+        with:
+          gist_id: ${{ vars.BADGE_GIST_ID }}
+          gist_token: ${{ secrets.BADGE_GIST_TOKEN }}
+          badge_type: cicd
+          build_status: ${{ steps.result.outputs.status }}
+          version_file: ${{ inputs.working_directory }}/package.json

@@ -1,0 +1,41 @@
+name: Check Tag Exists
+description: Composite action to check if a git tag already exists in the remote repository
+
+inputs:
+  tag:
+    description: 'Tag to check (without v prefix)'
+    required: true
+  version_file:
+    description: 'File to update version (e.g., package.json, pyproject.toml)'
+    required: true
+
+outputs:
+  TAG_EXISTS:
+    description: "Whether the tag already exists (true/false)"
+    value: ${{ steps.check-tag.outputs.TAG_EXISTS }}
+
+env:
+  # Colors for output
+  RED: '\033[0;31m'
+  GREEN: '\033[0;32m'
+  RESET: '\033[0m'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 🔍 Check if tag already exists
+      id: check-tag
+      shell: bash
+      run: |
+        TAG="v${{ inputs.tag }}"
+        if git ls-remote --tags origin "refs/tags/${TAG}" | grep -q "${TAG}"; then
+          echo -e "❌ ${RED}A tag ${TAG} já existe no repositório remoto!${RESET}"
+          echo -e "${RED}Atualize a versão no ${{ inputs.version_file }} antes de abrir o PR.${RESET}"
+          echo "## ❌ Tag já existe" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "A tag \`${TAG}\` já existe. Atualize a versão no \`${{ inputs.version_file }}\`." >> $GITHUB_STEP_SUMMARY
+          echo "TAG_EXISTS=true" >> "$GITHUB_OUTPUT"
+        else
+          echo -e "✅ ${GREEN}Tag ${TAG} disponível.${RESET}"
+          echo "TAG_EXISTS=false" >> "$GITHUB_OUTPUT"
+        fi

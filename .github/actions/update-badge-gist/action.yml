@@ -1,0 +1,147 @@
+name: Update Badge Gist
+description: |
+  Updates a public Gist with Shields.io endpoint JSON files for pipeline status,
+  app version, and runtime version. Supports pyproject.toml (Python) and
+  package.json (Node.js). Uses only curl + GitHub API (no third-party actions).
+  Badges rendered by https://github.com/badges/shields
+
+inputs:
+  gist_id:
+    description: 'ID of the public Gist to store badge JSON'
+    required: true
+  gist_token:
+    description: 'GitHub token with gist scope (PAT or fine-grained token)'
+    required: true
+  repo_name:
+    description: 'Repository name (e.g., gn-api-property-service). Defaults to current repo name.'
+    required: false
+    default: ''
+  badge_type:
+    description: 'Badge type: cicd or pr. Determines the status file name ({repo}-cicd.json or {repo}-pr.json)'
+    required: false
+    default: 'cicd'
+  build_status:
+    description: 'Pipeline result: success, failure, or cancelled. Use job.status context.'
+    required: false
+    default: 'success'
+  version_file:
+    description: 'Path to version file (pyproject.toml or package.json). Auto-detects project type from filename.'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 🏷️ Update badge Gist
+      shell: bash
+      env:
+        GIST_TOKEN: ${{ inputs.gist_token }}
+        GIST_ID: ${{ inputs.gist_id }}
+      run: |
+        set -e
+
+        REPO="${{ inputs.repo_name }}"
+        if [ -z "$REPO" ]; then
+          REPO="${GITHUB_REPOSITORY##*/}"
+        fi
+
+        BADGE_TYPE="${{ inputs.badge_type }}"
+        STATUS="${{ inputs.build_status }}"
+        VERSION_FILE="${{ inputs.version_file }}"
+
+        # Map job.status to badge display
+        case "$STATUS" in
+          success)   STATUS_MSG="passing";   STATUS_COLOR="brightgreen" ;;
+          failure)   STATUS_MSG="failing";   STATUS_COLOR="red" ;;
+          cancelled) STATUS_MSG="cancelled"; STATUS_COLOR="yellow" ;;
+          running)   STATUS_MSG="running";   STATUS_COLOR="orange" ;;
+          *)         STATUS_MSG="unknown";   STATUS_COLOR="lightgrey" ;;
+        esac
+
+        # Badge label based on type
+        if [ "$BADGE_TYPE" = "pr" ]; then
+          LABEL="PR"
+        else
+          LABEL="CI/CD"
+        fi
+
+        echo "📦 ${REPO} → ${BADGE_TYPE}=${STATUS_MSG}"
+
+        # --- Pipeline status badge ---
+        STATUS_CONTENT=$(jq -n \
+          --argjson schema 1 \
+          --arg label "$LABEL" \
+          --arg message "$STATUS_MSG" \
+          --arg color "$STATUS_COLOR" \
+          '{schemaVersion: $schema, label: $label, message: $message, color: $color}')
+
+        # Start Gist payload with status badge
+        PAYLOAD=$(jq -n \
+          --arg f "${REPO}-${BADGE_TYPE}.json" \
+          --arg c "$STATUS_CONTENT" \
+          '{files: {($f): {content: $c}}}')
+
+        # --- Version + Runtime badges (only for cicd, when version_file is provided and exists) ---
+        if [ "$BADGE_TYPE" = "cicd" ] && [ -n "$VERSION_FILE" ] && [ -f "$VERSION_FILE" ]; then
+          FILENAME=$(basename "$VERSION_FILE")
+
+          case "$FILENAME" in
+            pyproject.toml)
+              APP_VERSION=$(grep -E '^version\s*=' "$VERSION_FILE" | head -1 | sed -E 's/^version\s*=\s*"([^"]+)".*/\1/')
+              APP_VERSION="${APP_VERSION:-unknown}"
+              RUNTIME_LABEL="python"
+              RUNTIME_COLOR="3776AB"
+              RUNTIME_VERSION=$(grep -E '^requires-python\s*=' "$VERSION_FILE" | head -1 | sed -E 's/^requires-python\s*=\s*"([^"]+)".*/\1/')
+              RUNTIME_VERSION="${RUNTIME_VERSION:-unknown}"
+              ;;
+            package.json)
+              APP_VERSION=$(node -p "require('./${VERSION_FILE}').version" 2>/dev/null || echo "unknown")
+              RUNTIME_LABEL="node"
+              RUNTIME_COLOR="339933"
+              RUNTIME_VERSION=$(node --version 2>/dev/null || echo "unknown")
+              ;;
+            *)
+              echo "⚠️ Unknown version file: $FILENAME (skipping version badges)"
+              APP_VERSION=""
+              ;;
+          esac
+
+          if [ -n "$APP_VERSION" ]; then
+            echo "   📌 version=v${APP_VERSION}, ${RUNTIME_LABEL}=${RUNTIME_VERSION}"
+
+            VERSION_CONTENT=$(jq -n \
+              --argjson schema 1 \
+              --arg message "v${APP_VERSION}" \
+              '{schemaVersion: $schema, label: "version", message: $message, color: "blue"}')
+
+            RUNTIME_CONTENT=$(jq -n \
+              --argjson schema 1 \
+              --arg label "$RUNTIME_LABEL" \
+              --arg message "$RUNTIME_VERSION" \
+              --arg color "$RUNTIME_COLOR" \
+              '{schemaVersion: $schema, label: $label, message: $message, color: $color}')
+
+            PAYLOAD=$(echo "$PAYLOAD" | jq \
+              --arg f "${REPO}-version.json" --arg c "$VERSION_CONTENT" \
+              '.files += {($f): {content: $c}}')
+
+            PAYLOAD=$(echo "$PAYLOAD" | jq \
+              --arg f "${REPO}-${RUNTIME_LABEL}.json" --arg c "$RUNTIME_CONTENT" \
+              '.files += {($f): {content: $c}}')
+          fi
+        fi
+
+        # --- Update Gist via GitHub API ---
+        HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+          -X PATCH \
+          -H "Authorization: token ${GIST_TOKEN}" \
+          -H "Accept: application/vnd.github+json" \
+          "https://api.github.com/gists/${GIST_ID}" \
+          -d "$PAYLOAD")
+
+        if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+          echo "✅ Gist updated (HTTP ${HTTP_STATUS}) → ${BADGE_TYPE}=${STATUS_MSG}"
+        else
+          echo "::error::Failed to update Gist (HTTP ${HTTP_STATUS})"
+          exit 1
+        fi
