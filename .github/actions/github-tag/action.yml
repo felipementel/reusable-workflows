@@ -6,7 +6,7 @@ inputs:
     description: 'Tag to check (without v prefix)'
     required: true
   version_file:
-    description: 'File to update version (e.g., package.json, pyproject.toml)'
+    description: 'File to update version (e.g., package.json, pyproject.toml, *.csproj)'
     required: true
 
 outputs:
@@ -39,3 +39,27 @@ runs:
           echo -e "✅ ${GREEN}Tag ${TAG} disponível.${RESET}"
           echo "TAG_EXISTS=false" >> "$GITHUB_OUTPUT"
         fi
+
+    - name: 🏷️ Create tag
+      if: steps.check-tag.outputs.TAG_EXISTS == 'false'
+      shell: bash
+      run: |
+        TAG="v${{ inputs.tag }}"
+        git tag "${TAG}"
+        git push origin "${TAG}"
+        echo -e "✅ ${GREEN}Tag ${TAG} criada e enviada com sucesso.${RESET}"
+        echo "## ✅ Tag criada" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "A tag \`${TAG}\` foi criada e enviada para o repositório remoto." >> $GITHUB_STEP_SUMMARY
+
+    - name: 🏷️ Notify tag exists
+      if: steps.check-tag.outputs.TAG_EXISTS == 'true'
+      shell: bash
+      run: |
+        TAG="v${{ inputs.tag }}"
+        git tag "${TAG}"
+        git push origin "${TAG}"
+        echo -e "⚠️ ${YELLOW}Tag ${TAG} já existe !!!.${RESET}"
+        echo "## ⚠️ Tag já existe" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "A tag \`${TAG}\` já existe no repositório." >> $GITHUB_STEP_SUMMARY

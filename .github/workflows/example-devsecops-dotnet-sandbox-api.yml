@@ -159,6 +159,13 @@ jobs:
           projectBaseDir: ${{ inputs.projectBaseDir }}
           mainProject: ${{ inputs.mainProject }}
 
+      - name: Git Tag
+        uses: felipementel/reusable-workflows/.github/actions/github-tag@main
+        id: github-tag
+        with:
+          tag: ${{ steps.get-version.outputs.TAG }}
+          version_file: ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
+
       - name: 🛠️ Setup .NET version ${{ inputs.dotnetVersion }}
         uses: actions/setup-dotnet@v4
         with:
@@ -344,51 +351,26 @@ jobs:
             src
           sparse-checkout-cone-mode: false
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          version: latest
-          buildkitd-flags: --debug
-          platforms: linux/amd64,linux/arm64
-
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
+      - name: 🐳 Docker Build and Push
+        uses: felipementel/reusable-workflows/.github/actions/tools-docker-push@main
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: |
-            ghcr.io/${{ github.actor }}/deploy.${{ inputs.imageName }}
-
-      - name: Build and push ghcr
-        uses: docker/build-push-action@v5
-        with:
-          context: ${{ inputs.projectBaseDir }}
-          file: ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/Dockerfile
-          push: true
-          tags: |
-            ghcr.io/${{ github.actor }}/deploy.${{ inputs.imageName }}:latest
-            ghcr.io/${{ github.actor }}/deploy.${{ inputs.imageName }}:${{ needs.build.outputs.tag-version }}
-          labels: |
-            ${{ steps.meta.outputs.labels }}
+          registry-username: ${{ github.actor }}
+          registry-password: ${{ secrets.GITHUB_TOKEN }}
+          image-name: deploy.${{ inputs.imageName }}
+          tag-version: ${{ needs.build.outputs.tag-version }}
+          dockerfile: ${{ inputs.dockerFileFullPath }}
+          context: ${{ inputs.dockerBuildContext }}
 
       - name: 🔍 Trivy - Scan Docker image
         if: ${{ inputs.image_name != '' && env.IMAGE_BUILT == 'true' }}
-        uses: felipementel/reusable-workflows/.github/actions/trivy-scan@main
+        uses: felipementel/reusable-workflows/.github/actions/tools-trivy-scan@main
         with:
           scan-type: 'image'
           image-ref: scan-image:pr-${{ github.event.pull_request.number }}
           severity: 'CRITICAL,HIGH,MEDIUM'
           format: 'sarif'
-          output-file: 'trivy-pr-results.sarif'
+          output-file: 'trivy-deploy-results.sarif'
           upload-to-security: 'false'
           exit-code: '1'
 
