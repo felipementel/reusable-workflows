@@ -46,6 +46,10 @@ inputs:
     description: 'Exit code when vulnerabilities are found (0 or 1)'
     required: false
     default: '0'
+  category:
+    description: 'Unique category for SARIF upload (required when multiple Trivy scans run in same job)'
+    required: false
+    default: 'trivy'
 
 outputs:
   scan-results:
@@ -106,13 +110,14 @@ runs:
       continue-on-error: true
       with:
         sarif_file: ${{ inputs.output-file }}
+        category: ${{ inputs.category }}
 
     - name: 📦 Upload scan results as artifact
       if: ${{ always() && inputs.format == 'sarif' }}
       uses: actions/upload-artifact@v7
       continue-on-error: true
       with:
-        name: trivy-scan-results
+        name: ${{ inputs.category }}-results
         path: ${{ inputs.output-file }}
         archive: false
         retention-days: 30

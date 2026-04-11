@@ -246,6 +246,7 @@ jobs:
           ignore-unfixed: true
           exit-code: '1'
           trivyignores: ${{ steps.check-trivyignore.outputs.path }}
+          category: 'trivy-fs-vuln'
 
       - name: 🔎 Trivy - license scan
         uses: felipementel/reusable-workflows/.github/actions/tools-trivy-scan@main
@@ -259,6 +260,7 @@ jobs:
           ignore-unfixed: true
           exit-code: '1'
           trivyignores: ${{ steps.check-trivyignore.outputs.path }}
+          category: 'trivy-fs-license'
 
       - name: Run Trivy vulnerability scanner
         uses: felipementel/reusable-workflows/.github/actions/tools-trivy-scan@main
@@ -266,11 +268,12 @@ jobs:
           image-ref: ${{ inputs.imageName }}:${{ github.sha }}
           scan-type: 'image'
           format: 'sarif'
-          output: 'trivy-image-results.sarif'
+          output-file: 'trivy-image-results.sarif'
           severity: 'HIGH,CRITICAL'
           ignore-unfixed: true
           exit-code: '1'
           trivyignores: ${{ steps.check-trivyignore.outputs.path }}
+          category: 'trivy-image'
 
       - name: 🚀 Spectral OpenAPI Lint
         if: ${{ inputs.openAPIFolder != '' }}
