@@ -1,4 +1,4 @@
-name: DevSecOps Dispatch ⚡
+name: Sandbox API Dispatch ⚡
 run-name: "${{ github.actor }} - ${{ github.run_id }}"
 
 #Secrets on Caller: GITLEAKS_LICENSE, SNYK_TOKEN, SONAR_TOKEN, SONAR_PROJECT_KEY
@@ -16,11 +16,31 @@ on:
         description: 'Environment to run the workflow'
         required: true
         default: 'DEV'
+      gitLeaks:
+        type: boolean
+        description: 'Run GitLeaks'
+        required: true
+        default: true
+      sonarQube:
+        type: boolean
+        description: 'Run SonarQube'
+        required: true
+        default: true
       testsFolder:
         type: string
         description: 'The main test folder'
         required: false
         default: ''
+      tests:
+        type: boolean
+        description: 'Run Unit & Integration Tests'
+        required: true
+        default: false
+      snyk:
+        type: boolean
+        description: 'Snyk.io'
+        required: true
+        default: true
       msgCanalDeploy:
         type: string
         description: 'Message to be displayed in the summary'
@@ -69,21 +89,6 @@ on:
         description: 'Path to the folder containing OpenAPI specification files. This folder should include all necessary YAML or JSON files for API documentation.'
         required: true
         default: ""
-      dockerFileFullPath:
-        type: string
-        description: 'Full path to the Dockerfile to be used in the container scan (e.g. src/Project/Project/Dockerfile)'
-        required: false
-        default: ''
-      dockerBuildContext:
-        type: string
-        description: 'Docker build context (e.g. src/Project/Project or .)'
-        required: false
-        default: ''
-      dockerSetup:
-        type: boolean
-        description: 'Whether to set up Docker for the Snyk container scan'
-        required: false
-        default: false
     secrets:
       SONAR_PROJECT_KEY:
         required: true
@@ -97,9 +102,6 @@ on:
       SONAR_TOKEN:
         required: true
         description: 'Sonar Token'
-      SAFETY_API_KEY:
-        required: true
-        description: 'Safety API Key'
 env:
   RED: '\033[0;31m'
   GREEN: '\033[0;32m'
@@ -132,11 +134,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
-      contents: write
+      contents: read
       security-events: write
-      packages: write
-      id-token: write
-
 
     steps:
       - name: 🧭 Get Environment
@@ -149,7 +148,6 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ github.ref }}
-          fetch-depth: 0
           sparse-checkout: |
             src
             tests
@@ -162,14 +160,6 @@ jobs:
           projectBaseDir: ${{ inputs.projectBaseDir }}
           mainProject: ${{ inputs.mainProject }}
 
-      - name: Git Tag
-        uses: felipementel/reusable-workflows/.github/actions/github-tag@main
-        id: github-tag
-        with:
-          tag: ${{ steps.get-version.outputs.TAG }}
-          version_file: ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: 🛠️ Setup .NET version ${{ inputs.dotnetVersion }}
         uses: actions/setup-dotnet@v4
         with:
@@ -180,25 +170,9 @@ jobs:
           echo "DOTNET_ROOT: $DOTNET_ROOT"
           $DOTNET_ROOT/dotnet --info
 
-      - name: 🧱📤 Git Leaks
-        uses: felipementel/reusable-workflows/.github/actions/tools-git-leaks@main
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          gitleaks-license: ${{ secrets.GITLEAKS_LICENSE }}
-
-      # - name: Owasp Dependency Check
-      #   uses: felipementel/reusable-workflows/.github/actions/tools-owasp-zap@main
-      #   with:
-      #     projectBaseDir: ${{ inputs.projectBaseDir }}
-      #     mainProject: ${{ inputs.mainProject }}
-      #     solutionFileName: ${{ inputs.solutionFileName }}
-
-      - name: 🐋 Docker setup
-        if: ${{ inputs.dockerSetup == 'true' }}
-        uses: felipementel/reusable-workflows/.github/actions/tools-docker-setup@main
-
       - name: 🧪 Dotnet Test & Coverage
         id: dotnet-test
+        if: ${{ inputs.tests }}
         uses: felipementel/reusable-workflows/.github/actions/dotnet-test@main
         with:
           testsFolder: ${{ inputs.testsFolder }}
@@ -207,8 +181,16 @@ jobs:
           run-number: ${{ github.run_number }}
           run-id: ${{ github.run_id }}
 
-      - name: 📸 SonarCloud Analysis
-        uses: felipementel/reusable-workflows/.github/actions/tools-sonar-cloud-dotnet@main
+      - name: 🧱📤 Git Leaks
+        if: ${{ inputs.gitLeaks }}
+        uses: felipementel/reusable-workflows/.github/actions/git-leaks@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          gitleaks-license: ${{ secrets.GITLEAKS_LICENSE }}
+
+      - name: � SonarCloud Analysis
+        if: ${{ inputs.sonarQube }}
+        uses: felipementel/reusable-workflows/.github/actions/sonar-cloud@main
         with:
           has-tests: ${{ steps.dotnet-test.outputs.has-tests }}
           sonar-project-key: ${{ secrets.SONAR_PROJECT_KEY }}
@@ -222,71 +204,17 @@ jobs:
           java-version: ${{ env.javaVersion }}
           java-distro: ${{ env.javaDistro }}
 
-      - name: Build an image from Dockerfile
-        run: >-
-          docker build 
-          -t ${{ inputs.imageName }}:${{ github.sha }} 
-          -f ${{ inputs.dockerFileFullPath }} ${{ inputs.dockerBuildContext }}
-
       - name: 🍵 Snyk Security Scan
-        uses: felipementel/reusable-workflows/.github/actions/tools-snyk-dotnet@main
+        if: ${{ inputs.snyk }}
+        uses: felipementel/reusable-workflows/.github/actions/tools-snyk@main
         with:
           snyk-token: ${{ secrets.SNYK_TOKEN }}
           projectBaseDir: ${{ inputs.projectBaseDir }}
           mainProject: ${{ inputs.mainProject }}
           solutionFileName: ${{ inputs.solutionFileName }}
-          imageName: ${{ inputs.imageName }}:${{ github.sha }}
-          docker-file-full-path: ${{ inputs.dockerFileFullPath }}
-          docker-build-context: ${{ inputs.dockerBuildContext }}
+          imageName: ${{ inputs.imageName }}
 
-      - name: Safety Python Dependency Check
-        uses: felipementel/reusable-workflows/.github/actions/tools-safety@main
-        with:
-          api-key: ${{ secrets.SAFETY_API_KEY }}
-
-      # Trivy no source/repo SAST scan (vulnerabilities, secrets, misconfigurations)
-      - name: 🔎 Trivy - Filesystem Scan (vuln, secret, misconfig)
-        uses: felipementel/reusable-workflows/.github/actions/tools-trivy-scan@main
-        with:
-          scan-type: 'fs'
-          scan-ref: '${{ env.working_directory }}'
-          scanners: 'vuln,misconfig,secret'
-          format: 'sarif'
-          output-file: 'trivy-fs-results.sarif'
-          severity: 'HIGH,CRITICAL'
-          ignore-unfixed: true
-          exit-code: '1'
-          trivyignores: ${{ steps.check-trivyignore.outputs.path }}
-          category: 'trivy-fs-vuln'
-
-      - name: 🔎 Trivy - license scan
-        uses: felipementel/reusable-workflows/.github/actions/tools-trivy-scan@main
-        with:
-          scan-type: 'fs'
-          scan-ref: '${{ env.working_directory }}'
-          scanners: 'license'
-          format: 'sarif'
-          output-file: 'trivy-license-results.sarif'
-          severity: 'MEDIUM,HIGH,CRITICAL'
-          ignore-unfixed: true
-          exit-code: '1'
-          trivyignores: ${{ steps.check-trivyignore.outputs.path }}
-          category: 'trivy-fs-license'
-
-      - name: Run Trivy vulnerability scanner
-        uses: felipementel/reusable-workflows/.github/actions/tools-trivy-scan@main
-        with:
-          image-ref: ${{ inputs.imageName }}:${{ github.sha }}
-          scan-type: 'image'
-          format: 'sarif'
-          output-file: 'trivy-image-results.sarif'
-          severity: 'HIGH,CRITICAL'
-          ignore-unfixed: true
-          exit-code: '1'
-          trivyignores: ${{ steps.check-trivyignore.outputs.path }}
-          category: 'trivy-image'
-
-      - name: 🚀 Spectral OpenAPI Lint
+      - name: �️ Spectral OpenAPI Lint
         if: ${{ inputs.openAPIFolder != '' }}
         uses: felipementel/reusable-workflows/.github/actions/tools-spectral@main
         with:
@@ -355,28 +283,41 @@ jobs:
             src
           sparse-checkout-cone-mode: false
 
-      - name: 🐳 Docker Build and Push
-        uses: felipementel/reusable-workflows/.github/actions/tools-docker-push@main
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          version: latest
+          buildkitd-flags: --debug
+          platforms: linux/amd64,linux/arm64
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          registry-username: ${{ github.actor }}
-          registry-password: ${{ secrets.GITHUB_TOKEN }}
-          image-name: deploy.${{ inputs.imageName }}
-          tag-version: ${{ needs.build.outputs.tag-version }}
-          dockerfile: ${{ inputs.dockerFileFullPath }}
-          context: ${{ inputs.dockerBuildContext }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 🔍 Trivy - Scan Docker image
-        if: ${{ inputs.image_name != '' && env.IMAGE_BUILT == 'true' }}
-        uses: felipementel/reusable-workflows/.github/actions/tools-trivy-scan@main
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
         with:
-          scan-type: 'image'
-          image-ref: scan-image:pr-${{ github.event.pull_request.number }}
-          severity: 'CRITICAL,HIGH,MEDIUM'
-          format: 'sarif'
-          output-file: 'trivy-deploy-results.sarif'
-          upload-to-security: 'false'
-          exit-code: '1'
+          images: |
+            ghcr.io/${{ github.actor }}/deploy.${{ inputs.imageName }}
+
+      - name: Build and push ghcr
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ inputs.projectBaseDir }}
+          file: ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.actor }}/deploy.${{ inputs.imageName }}:latest
+            ghcr.io/${{ github.actor }}/deploy.${{ inputs.imageName }}:${{ needs.build.outputs.tag-version }}
+          labels: |
+            ${{ steps.meta.outputs.labels }}
 
       - name: Write to workflow job summary DEPLOY
         run: |

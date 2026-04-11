@@ -1,0 +1,55 @@
+name: Docker Check Image Exists
+description: Composite action to check if a Docker image already exists in a container registry
+
+inputs:
+  registry:
+    description: 'Container registry URL (e.g., ghcr.io, docker.io)'
+    required: false
+    default: 'ghcr.io'
+  registry-username:
+    description: 'Username for registry authentication'
+    required: true
+  registry-password:
+    description: 'Password or token for registry authentication'
+    required: true
+  image-name:
+    description: 'Full image name without registry prefix (e.g., deploy.myapp)'
+    required: true
+  tag-version:
+    description: 'Image tag to check'
+    required: true
+
+outputs:
+  IMAGE_EXISTS:
+    description: 'Whether the image already exists in the registry (true/false)'
+    value: ${{ steps.check-image.outputs.IMAGE_EXISTS }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 🔐 Log in to the Container registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ inputs.registry }}
+        username: ${{ inputs.registry-username }}
+        password: ${{ inputs.registry-password }}
+
+    - name: 🔍 Check if image exists
+      id: check-image
+      shell: bash
+      run: |
+        IMAGE_TAG="${{ inputs.registry }}/${{ inputs.registry-username }}/${{ inputs.image-name }}:${{ inputs.tag-version }}"
+        echo "Checking existence of $IMAGE_TAG..."
+        if docker manifest inspect "$IMAGE_TAG" > /dev/null 2>&1; then
+          echo "✅ Image exists in registry"
+          echo "IMAGE_EXISTS=true" >> "$GITHUB_OUTPUT"
+          echo "## ✅ Image already exists" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Image \`$IMAGE_TAG\` already exists in the registry." >> $GITHUB_STEP_SUMMARY
+        else
+          echo "🔍 Image does not exist in registry"
+          echo "IMAGE_EXISTS=false" >> "$GITHUB_OUTPUT"
+          echo "## 🔍 Image not found" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Image \`$IMAGE_TAG\` does not exist. Proceeding with build and push." >> $GITHUB_STEP_SUMMARY
+        fi
