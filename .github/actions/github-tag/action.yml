@@ -8,6 +8,9 @@ inputs:
   version_file:
     description: 'File to update version (e.g., package.json, pyproject.toml, *.csproj)'
     required: true
+  github-token:
+    description: 'GitHub token with contents:write permission'
+    required: true
 
 outputs:
   TAG_EXISTS:
@@ -43,8 +46,13 @@ runs:
     - name: 🏷️ Create tag
       if: steps.check-tag.outputs.TAG_EXISTS == 'false'
       shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
       run: |
         TAG="v${{ inputs.tag }}"
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
         git tag "${TAG}"
         git push origin "${TAG}"
         echo -e "✅ ${GREEN}Tag ${TAG} criada e enviada com sucesso.${RESET}"
@@ -57,9 +65,7 @@ runs:
       shell: bash
       run: |
         TAG="v${{ inputs.tag }}"
-        git tag "${TAG}"
-        git push origin "${TAG}"
-        echo -e "⚠️ ${YELLOW}Tag ${TAG} já existe !!!.${RESET}"
+        echo -e "⚠️ Tag ${TAG} já existe !!!"
         echo "## ⚠️ Tag já existe" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "A tag \`${TAG}\` já existe no repositório." >> $GITHUB_STEP_SUMMARY

@@ -132,7 +132,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
-      contents: read
+      contents: write
       security-events: write
       packages: write
       id-token: write
@@ -168,6 +168,7 @@ jobs:
         with:
           tag: ${{ steps.get-version.outputs.TAG }}
           version_file: ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🛠️ Setup .NET version ${{ inputs.dotnetVersion }}
         uses: actions/setup-dotnet@v4
