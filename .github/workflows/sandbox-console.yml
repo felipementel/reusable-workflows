@@ -199,7 +199,7 @@ jobs:
         run: |
           dotnet tool install --global dotnet-coverage
           dotnet tool install --global dotnet-reportgenerator-globaltool
-          
+
       - name: 🧱 Git Leaks
         uses: gitleaks/gitleaks-action@v2
         if: ${{ inputs.git-leaks }}
@@ -333,7 +333,7 @@ jobs:
           | ${{ steps.get-version.outputs.tag }} | ${{ steps.get-env.outputs.now }} | \n
           Mensagem: ${{ inputs.msg-canal-deploy }}\n'
           echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
-          
+
   check-image:
     name: Check if image exists
     environment: ${{ inputs.environment }}
@@ -342,26 +342,16 @@ jobs:
       image-exists: ${{ steps.check-image-and-tag.outputs.IMAGE_EXISTS }}
     needs: build
     steps:
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
+      - name: 🔍 Check if image exists in registry
+        id: check-image-and-tag
+        uses: felipementel/reusable-workflows/.github/actions/tools/docker/check-image@main
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          registry-username: ${{ github.actor }}
+          registry-password: ${{ secrets.GITHUB_TOKEN }}
+          image-name: deploy.${{ inputs.imageName }}
+          tag-version: ${{ needs.build.outputs.tag-version }}
 
-      - name: Check if image with same tag exists
-        id: check-image-and-tag
-        run: |
-          IMAGE_TAG="ghcr.io/${{ github.actor }}/deploy.${{ inputs.imageName }}:${{ needs.build.outputs.tag-version }}"
-          echo "Checking existence of $IMAGE_TAG..."
-          if docker manifest inspect "$IMAGE_TAG" > /dev/null 2>&1; then
-            echo -e "✅ ${GREEN} Image exists in registry"
-            echo "IMAGE_EXISTS=true" >> "$GITHUB_OUTPUT"
-          else
-            echo -e "🔍 ${RED} Image does not exist in registry"
-            echo "IMAGE_EXISTS=false" >> "$GITHUB_OUTPUT"
-          fi
-          
   push-image:
     name: Push image to Registry
     environment: ${{ inputs.environment }}
@@ -382,41 +372,26 @@ jobs:
             src
           sparse-checkout-cone-mode: false
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+      - name: 🐳 Docker Setup
+        uses: felipementel/reusable-workflows/.github/actions/tools/docker/setup@main
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          version: latest
-          buildkitd-flags: --debug
-          platforms: linux/amd64,linux/arm64
-
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
+      - name: 🐳 Docker Login
+        uses: felipementel/reusable-workflows/.github/actions/tools/docker/login@main
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          registry-username: ${{ github.actor }}
+          registry-password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
+      - name: 🐳 Docker Build and Push
+        uses: felipementel/reusable-workflows/.github/actions/tools/docker/buildx@main
         with:
-          images: |
-            ghcr.io/${{ github.actor }}/deploy.${{ inputs.imageName }}
-
-      - name: Build and push ghcr
-        uses: docker/build-push-action@v5
-        with:
+          registry: ghcr.io
+          registry-username: ${{ github.actor }}
+          image-name: deploy.${{ inputs.imageName }}
+          tag-version: ${{ needs.build.outputs.tag-version }}
+          dockerfile: ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/Dockerfile
           context: ${{ inputs.projectBaseDir }}
-          file: ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/Dockerfile
-          push: true
-          tags: |
-            ghcr.io/${{ github.actor }}/deploy.${{ inputs.imageName }}:latest
-            ghcr.io/${{ github.actor }}/deploy.${{ inputs.imageName }}:${{ needs.build.outputs.tag-version }}
-          labels: |
-            ${{ steps.meta.outputs.labels }}
+          push: 'true'
 
       - name: Write to workflow job summary DEPLOY
         run: |
@@ -444,7 +419,7 @@ jobs:
           | ${{ needs.build.outputs.tag-version }} | ${{ needs.build.outputs.now }} | \n
           Mensagem: ${{ inputs.msg-canal-deploy }}\n'
           echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
-          
+
   notify-image-exists:
     name: Notify when already image exists
     needs: [build, check-image]

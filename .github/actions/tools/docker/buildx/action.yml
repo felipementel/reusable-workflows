@@ -1,5 +1,5 @@
-name: Docker Build and Push
-description: Composite action to build and push Docker images to a container registry
+name: Docker Buildx Build
+description: Composite action to build Docker images using buildx (supports multi-platform and tar export)
 
 inputs:
   registry:
@@ -8,9 +8,6 @@ inputs:
     default: 'ghcr.io'
   registry-username:
     description: 'Username for registry authentication'
-    required: true
-  registry-password:
-    description: 'Password or token for registry authentication'
     required: true
   image-name:
     description: 'Docker image name (without registry prefix)'
@@ -33,26 +30,14 @@ inputs:
     description: 'Whether to push the image after build'
     required: false
     default: 'true'
+  output-tar:
+    description: 'Path to export the image as a tar file (e.g., ./my-image.tar). When set, runs docker buildx build --output=type=docker,dest=<path>'
+    required: false
+    default: ''
 
 runs:
   using: 'composite'
   steps:
-    - name: 🐳 Set up QEMU
-      uses: docker/setup-qemu-action@v3
-
-    - name: 🐳 Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-      with:
-        version: latest
-        buildkitd-flags: --debug
-        platforms: ${{ inputs.platforms }}
-
-    - name: 🐳 Log in to the Container registry
-      uses: docker/login-action@v3
-      with:
-        registry: ${{ inputs.registry }}
-        username: ${{ inputs.registry-username }}
-        password: ${{ inputs.registry-password }}
 
     - name: 🐳 Extract metadata (tags, labels) for Docker
       id: meta
@@ -62,24 +47,37 @@ runs:
           ${{ inputs.registry }}/${{ inputs.registry-username }}/${{ inputs.image-name }}
 
     - name: 🐳 Build and push
+      if: inputs.output-tar == ''
       uses: docker/build-push-action@v5
       with:
         context: ${{ inputs.context }}
         file: ${{ inputs.dockerfile }}
+        platforms: ${{ inputs.platforms }}
         push: ${{ inputs.push }}
         tags: |
           ${{ inputs.registry }}/${{ inputs.registry-username }}/${{ inputs.image-name }}:latest
           ${{ inputs.registry }}/${{ inputs.registry-username }}/${{ inputs.image-name }}:${{ inputs.tag-version }}
-        labels: |
-          ${{ steps.meta.outputs.labels }}
+        labels: ${{ steps.meta.outputs.labels }}
+
+    - name: 🐳 Build and export to tar
+      if: inputs.output-tar != ''
+      shell: bash
+      run: |
+        docker buildx build \
+          -f ${{ inputs.dockerfile }} \
+          -t ${{ inputs.registry }}/${{ inputs.registry-username }}/${{ inputs.image-name }}:${{ inputs.tag-version }} \
+          --output=type=docker,dest=${{ inputs.output-tar }} \
+          ${{ inputs.context }}
 
     - name: 📊 Summary
       shell: bash
       run: |
-        echo "### 🐳 Docker Build and Push" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "- **Registry:** \`${{ inputs.registry }}\`" >> $GITHUB_STEP_SUMMARY
-        echo "- **Image:** \`${{ inputs.registry }}/${{ inputs.registry-username }}/${{ inputs.image-name }}\`" >> $GITHUB_STEP_SUMMARY
-        echo "- **Tags:** \`latest\`, \`${{ inputs.tag-version }}\`" >> $GITHUB_STEP_SUMMARY
-        echo "- **Dockerfile:** \`${{ inputs.dockerfile }}\`" >> $GITHUB_STEP_SUMMARY
-        echo "- **Platforms:** \`${{ inputs.platforms }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "### 🐳 Docker Build" >> "$GITHUB_STEP_SUMMARY"
+        echo "" >> "$GITHUB_STEP_SUMMARY"
+        echo "- **Image:** \`${{ inputs.registry }}/${{ inputs.registry-username }}/${{ inputs.image-name }}\`" >> "$GITHUB_STEP_SUMMARY"
+        echo "- **Tags:** \`latest\`, \`${{ inputs.tag-version }}\`" >> "$GITHUB_STEP_SUMMARY"
+        echo "- **Dockerfile:** \`${{ inputs.dockerfile }}\`" >> "$GITHUB_STEP_SUMMARY"
+        echo "- **Platforms:** \`${{ inputs.platforms }}\`" >> "$GITHUB_STEP_SUMMARY"
+        if [ -n "${{ inputs.output-tar }}" ]; then
+          echo "- **Tar export:** \`${{ inputs.output-tar }}\`" >> "$GITHUB_STEP_SUMMARY"
+        fi

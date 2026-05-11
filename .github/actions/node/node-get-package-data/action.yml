@@ -1,0 +1,82 @@
+name: React Get Version
+description: Composite action to get React app version from package.json
+
+inputs:
+  environment:
+    description: 'Deployment environment (e.g., PRD, HML)'
+    required: true
+    default: 'DEV'
+  working_directory:
+    description: 'Working directory where package.json is located'
+    required: false
+    default: './source'
+
+outputs:
+  TAG:
+    description: "Tag version with environment suffix if applicable"
+    value: ${{ steps.get-version.outputs.TAG }}
+  VERSION:
+    description: "Application version"
+    value: ${{ steps.get-version.outputs.VERSION }}
+  BUILD_COMMIT_SHA:
+    description: "Build commit SHA"
+    value: ${{ steps.get-version.outputs.BUILD_COMMIT_SHA }}
+
+env:
+  # Colors for output
+  RED: '\033[0;31m'
+  GREEN: '\033[0;32m'
+  YELLOW: '\033[0;33m'
+  BLUE: '\033[0;34m'
+  RESET: '\033[0m'
+  BOLD: '\033[1m'
+  BOLD_GREEN: '\033[1;32m'
+  BOLD_YELLOW: '\033[1;33m'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 🔍 Extract App Version
+      id: get-version
+      shell: bash
+      run: |
+        set -e
+        PACKAGE_JSON="${{ inputs.working_directory }}/package.json"
+        if [ ! -f "$PACKAGE_JSON" ]; then
+          echo -e "❌ ${RED} package.json não encontrado em ${{ inputs.working_directory }}" >&2
+          exit 1
+        fi
+        version=$(node -p "require('./$PACKAGE_JSON').version")
+        if [ -z "$version" ]; then
+          echo -e "❌ ${RED} Não foi possível extrair 'version' de package.json" >&2
+          exit 1
+        fi
+        tag="${version}"
+
+        app_name=$(node -p "require('./$PACKAGE_JSON').name")
+        if [ -z "$app_name" ]; then
+          echo -e "❌ ${RED} Não foi possível extrair 'name' de package.json" >&2
+          exit 1
+        fi
+        app_name="${app_name}"
+
+        # Append suffix based on environment
+        ENVIRONMENT='${{ inputs.environment }}'
+        BRANCH_NAME="${GITHUB_REF_NAME}"
+
+        if [ "${ENVIRONMENT,,}" == "dev" ]; then
+          tag="${tag}-dev"
+          echo -e "🔧 ${YELLOW} Aplicando sufixo -dev (env=$ENVIRONMENT, branch=$BRANCH_NAME)"
+        elif [ "${ENVIRONMENT,,}" == "hml" ]; then
+          tag="${tag}-sandbox"
+          echo -e "🛡️ ${YELLOW} Aplicando sufixo -sandbox (env=$ENVIRONMENT, branch=$BRANCH_NAME)"
+        else
+          echo -e "✅ ${GREEN} Sem sufixo (env=$ENVIRONMENT, branch=$BRANCH_NAME)"
+        fi
+
+        echo -e "📦${GREEN} Version: $version"
+        echo -e "🏷️${GREEN} TAG final: $tag"
+        echo "TAG=$tag" >> "$GITHUB_OUTPUT"
+        echo "VERSION=$version" >> "$GITHUB_OUTPUT"
+        echo "APP_NAME=$app_name" >> "$GITHUB_OUTPUT"
+        echo "BUILD_COMMIT_SHA=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"

@@ -1,0 +1,25 @@
+name: Docker Login
+description: Composite action to authenticate with a container registry
+
+inputs:
+  registry:
+    description: 'Container registry URL (e.g., ghcr.io, docker.io)'
+    required: false
+    default: 'ghcr.io'
+  registry-username:
+    description: 'Username for registry authentication'
+    required: true
+  registry-password:
+    description: 'Password or token for registry authentication'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+
+    - name: 🐳 Log in to the Container registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ inputs.registry }}
+        username: ${{ inputs.registry-username }}
+        password: ${{ inputs.registry-password }}

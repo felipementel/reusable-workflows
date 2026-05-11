@@ -43,13 +43,13 @@ runs:
         if docker manifest inspect "$IMAGE_TAG" > /dev/null 2>&1; then
           echo "✅ Image exists in registry"
           echo "IMAGE_EXISTS=true" >> "$GITHUB_OUTPUT"
-          echo "## ✅ Image already exists" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Image \`$IMAGE_TAG\` already exists in the registry." >> $GITHUB_STEP_SUMMARY
+          echo "## ✅ Image already exists" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Image \`$IMAGE_TAG\` already exists in the registry." >> "$GITHUB_STEP_SUMMARY"
         else
           echo "🔍 Image does not exist in registry"
           echo "IMAGE_EXISTS=false" >> "$GITHUB_OUTPUT"
-          echo "## 🔍 Image not found" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Image \`$IMAGE_TAG\` does not exist. Proceeding with build and push." >> $GITHUB_STEP_SUMMARY
+          echo "## 🔍 Image not found" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Image \`$IMAGE_TAG\` does not exist. Proceeding with build and push." >> "$GITHUB_STEP_SUMMARY"
         fi

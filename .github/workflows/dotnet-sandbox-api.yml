@@ -155,13 +155,13 @@ jobs:
 
       - name: 🔍 Get-Version from csproj
         id: get-version
-        uses: felipementel/reusable-workflows/.github/actions/dotnet-get-version@main
+        uses: felipementel/reusable-workflows/.github/actions/dotnet/get-version@main
         with:
           projectBaseDir: ${{ inputs.projectBaseDir }}
           mainProject: ${{ inputs.mainProject }}
 
       - name: Git Tag
-        uses: felipementel/reusable-workflows/.github/actions/github-tag@main
+        uses: felipementel/reusable-workflows/.github/actions/git/tag@main
         id: github-tag
         with:
           tag: ${{ steps.get-version.outputs.TAG }}
@@ -179,7 +179,7 @@ jobs:
           $DOTNET_ROOT/dotnet --info
 
       - name: 🧱📤 Git Leaks
-        uses: felipementel/reusable-workflows/.github/actions/tools-git-leaks@main
+        uses: felipementel/reusable-workflows/.github/actions/tools/security/giteaks@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           gitleaks-license: ${{ secrets.GITLEAKS_LICENSE }}
@@ -193,11 +193,11 @@ jobs:
 
       - name: 🐋 Docker setup
         if: ${{ inputs.dockerSetup == 'true' }}
-        uses: felipementel/reusable-workflows/.github/actions/tools-docker-setup@main
+        uses: felipementel/reusable-workflows/.github/actions/tools/docker/setup@main
 
       - name: 🧪 Dotnet Test & Coverage
         id: dotnet-test
-        uses: felipementel/reusable-workflows/.github/actions/dotnet-test@main
+        uses: felipementel/reusable-workflows/.github/actions/dotnet/dotnet-test@main
         with:
           testsFolder: ${{ inputs.testsFolder }}
           reportTitle: ${{ inputs.reportTitle }}
@@ -206,7 +206,7 @@ jobs:
           run-id: ${{ github.run_id }}
 
       - name: 📸 SonarCloud Analysis
-        uses: felipementel/reusable-workflows/.github/actions/tools-sonar-cloud-dotnet@main
+        uses: felipementel/reusable-workflows/.github/actions/tools/code-quality/sonar-cloud-dotnet@main
         with:
           has-tests: ${{ steps.dotnet-test.outputs.has-tests }}
           sonar-project-key: ${{ secrets.SONAR_PROJECT_KEY }}
@@ -220,31 +220,36 @@ jobs:
           java-version: ${{ env.javaVersion }}
           java-distro: ${{ env.javaDistro }}
 
-      - name: Build an image from Dockerfile
-        run: >-
-          docker build 
-          -t ${{ inputs.imageName }}:${{ github.sha }} 
-          -f ${{ inputs.dockerFileFullPath }} ${{ inputs.dockerBuildContext }}
+      - name: 🐳 Docker Build (local, for Snyk scan)
+        uses: felipementel/reusable-workflows/.github/actions/tools/docker/buildx@main
+        with:
+          registry: ghcr.io
+          registry-username: ${{ github.actor }}
+          image-name: deploy.${{ inputs.imageName }}
+          tag-version: ${{ github.sha }}
+          dockerfile: ${{ inputs.dockerFileFullPath }}
+          context: ${{ inputs.dockerBuildContext }}
+          push: 'false'
 
       - name: 🍵 Snyk Security Scan
-        uses: felipementel/reusable-workflows/.github/actions/tools-snyk-dotnet@main
+        uses: felipementel/reusable-workflows/.github/actions/tools/security/snyk-dotnet@main
         with:
           snyk-token: ${{ secrets.SNYK_TOKEN }}
           projectBaseDir: ${{ inputs.projectBaseDir }}
           mainProject: ${{ inputs.mainProject }}
           solutionFileName: ${{ inputs.solutionFileName }}
-          imageName: ${{ inputs.imageName }}:${{ github.sha }}
+          imageName: ghcr.io/${{ github.actor }}/deploy.${{ inputs.imageName }}:${{ github.sha }}
           docker-file-full-path: ${{ inputs.dockerFileFullPath }}
           docker-build-context: ${{ inputs.dockerBuildContext }}
 
       - name: Safety Python Dependency Check
-        uses: felipementel/reusable-workflows/.github/actions/tools-safety@main
+        uses: felipementel/reusable-workflows/.github/actions/tools/security/safety@main
         with:
           api-key: ${{ secrets.SAFETY_API_KEY }}
 
       # Trivy no source/repo SAST scan (vulnerabilities, secrets, misconfigurations)
       - name: 🔎 Trivy - Filesystem Scan (vuln, secret, misconfig)
-        uses: felipementel/reusable-workflows/.github/actions/tools-trivy-scan@main
+        uses: felipementel/reusable-workflows/.github/actions/tools/security/trivy-scan@main
         with:
           scan-type: 'fs'
           scan-ref: '${{ env.working_directory }}'
@@ -258,7 +263,7 @@ jobs:
           category: 'trivy-fs-vuln'
 
       - name: 🔎 Trivy - license scan
-        uses: felipementel/reusable-workflows/.github/actions/tools-trivy-scan@main
+        uses: felipementel/reusable-workflows/.github/actions/tools/security/trivy-scan@main
         with:
           scan-type: 'fs'
           scan-ref: '${{ env.working_directory }}'
@@ -272,7 +277,7 @@ jobs:
           category: 'trivy-fs-license'
 
       - name: Run Trivy vulnerability scanner
-        uses: felipementel/reusable-workflows/.github/actions/tools-trivy-scan@main
+        uses: felipementel/reusable-workflows/.github/actions/tools/security/trivy-scan@main
         with:
           image-ref: ${{ inputs.imageName }}:${{ github.sha }}
           scan-type: 'image'
@@ -286,7 +291,7 @@ jobs:
 
       - name: 🚀 Spectral OpenAPI Lint
         if: ${{ inputs.openAPIFolder != '' }}
-        uses: felipementel/reusable-workflows/.github/actions/tools-spectral@main
+        uses: felipementel/reusable-workflows/.github/actions/tools/code-quality/spectral@main
         with:
           openAPIFolder: ${{ inputs.openAPIFolder }}
           node-version: ${{ env.nodeVersion }}
@@ -315,7 +320,7 @@ jobs:
     steps:
       - name: 🔍 Check if image exists in registry
         id: check-image
-        uses: felipementel/reusable-workflows/.github/actions/tools-docker-check-image@main
+        uses: felipementel/reusable-workflows/.github/actions/tools/docker/check-image@main
         with:
           registry: ghcr.io
           registry-username: ${{ github.actor }}
@@ -344,7 +349,7 @@ jobs:
           sparse-checkout-cone-mode: false
 
       - name: 🐳 Docker Build and Push
-        uses: felipementel/reusable-workflows/.github/actions/tools-docker-push@main
+        uses: felipementel/reusable-workflows/.github/actions/tools/docker/push@main
         with:
           registry: ghcr.io
           registry-username: ${{ github.actor }}
@@ -356,7 +361,7 @@ jobs:
 
       - name: 🔍 Trivy - Scan Docker image
         if: ${{ inputs.image_name != '' && env.IMAGE_BUILT == 'true' }}
-        uses: felipementel/reusable-workflows/.github/actions/tools-trivy-scan@main
+        uses: felipementel/reusable-workflows/.github/actions/tools/security/trivy-scan@main
         with:
           scan-type: 'image'
           image-ref: scan-image:pr-${{ github.event.pull_request.number }}

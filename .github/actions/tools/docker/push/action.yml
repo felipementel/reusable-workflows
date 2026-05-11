@@ -1,0 +1,35 @@
+name: Docker Push
+description: Composite action to push Docker images to a container registry
+
+inputs:
+  registry:
+    description: 'Container registry URL (e.g., ghcr.io, docker.io)'
+    required: false
+    default: 'ghcr.io'
+  registry-username:
+    description: 'Username for registry authentication'
+    required: true
+  image-name:
+    description: 'Docker image name (without registry prefix)'
+    required: true
+  tag-version:
+    description: 'Version tag for the image'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 🐳 Docker push
+      shell: bash
+      run: |
+        docker push ${{ inputs.registry }}/${{ inputs.registry-username }}/${{ inputs.image-name }}:${{ inputs.tag-version }}
+        docker push ${{ inputs.registry }}/${{ inputs.registry-username }}/${{ inputs.image-name }}:latest
+
+    - name: 📊 Summary
+      shell: bash
+      run: |
+        echo "### 🐳 Docker Push" >> "$GITHUB_STEP_SUMMARY"
+        echo "" >> "$GITHUB_STEP_SUMMARY"
+        echo "- **Registry:** \`${{ inputs.registry }}\`" >> "$GITHUB_STEP_SUMMARY"
+        echo "- **Image:** \`${{ inputs.registry }}/${{ inputs.registry-username }}/${{ inputs.image-name }}\`" >> "$GITHUB_STEP_SUMMARY"
+        echo "- **Tags:** \`latest\`, \`${{ inputs.tag-version }}\`" >> "$GITHUB_STEP_SUMMARY"

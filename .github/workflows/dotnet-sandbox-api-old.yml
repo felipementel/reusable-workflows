@@ -155,7 +155,7 @@ jobs:
 
       - name: 🔍 Get-Version from csproj
         id: get-version
-        uses: felipementel/reusable-workflows/.github/actions/dotnet-get-version@main
+        uses: felipementel/reusable-workflows/.github/actions/dotnet/get-version@main
         with:
           projectBaseDir: ${{ inputs.projectBaseDir }}
           mainProject: ${{ inputs.mainProject }}
@@ -173,7 +173,7 @@ jobs:
       - name: 🧪 Dotnet Test & Coverage
         id: dotnet-test
         if: ${{ inputs.tests }}
-        uses: felipementel/reusable-workflows/.github/actions/dotnet-test@main
+        uses: felipementel/reusable-workflows/.github/actions/dotnet/dotnet-test@main
         with:
           testsFolder: ${{ inputs.testsFolder }}
           reportTitle: ${{ inputs.reportTitle }}
@@ -183,14 +183,14 @@ jobs:
 
       - name: 🧱📤 Git Leaks
         if: ${{ inputs.gitLeaks }}
-        uses: felipementel/reusable-workflows/.github/actions/git-leaks@main
+        uses: felipementel/reusable-workflows/.github/actions/tools/security/giteaks@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           gitleaks-license: ${{ secrets.GITLEAKS_LICENSE }}
 
       - name: � SonarCloud Analysis
         if: ${{ inputs.sonarQube }}
-        uses: felipementel/reusable-workflows/.github/actions/sonar-cloud@main
+        uses: felipementel/reusable-workflows/.github/actions/tools/code-quality/sonar-cloud-dotnet@main
         with:
           has-tests: ${{ steps.dotnet-test.outputs.has-tests }}
           sonar-project-key: ${{ secrets.SONAR_PROJECT_KEY }}
@@ -206,7 +206,7 @@ jobs:
 
       - name: 🍵 Snyk Security Scan
         if: ${{ inputs.snyk }}
-        uses: felipementel/reusable-workflows/.github/actions/tools-snyk@main
+        uses: felipementel/reusable-workflows/.github/actions/tools/security/snyk-dotnet@main
         with:
           snyk-token: ${{ secrets.SNYK_TOKEN }}
           projectBaseDir: ${{ inputs.projectBaseDir }}
@@ -216,7 +216,7 @@ jobs:
 
       - name: �️ Spectral OpenAPI Lint
         if: ${{ inputs.openAPIFolder != '' }}
-        uses: felipementel/reusable-workflows/.github/actions/tools-spectral@main
+        uses: felipementel/reusable-workflows/.github/actions/tools/code-quality/spectral@main
         with:
           openAPIFolder: ${{ inputs.openAPIFolder }}
           node-version: ${{ env.nodeVersion }}
@@ -243,25 +243,15 @@ jobs:
       image-exists: ${{ steps.check-image-and-tag.outputs.IMAGE_EXISTS }}
     needs: build
     steps:
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
+      - name: 🔍 Check if image exists in registry
+        id: check-image-and-tag
+        uses: felipementel/reusable-workflows/.github/actions/tools/docker/check-image@main
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Check if image with same tag exists
-        id: check-image-and-tag
-        run: |
-          IMAGE_TAG="ghcr.io/${{ github.actor }}/deploy.${{ inputs.imageName }}:${{ needs.build.outputs.tag-version }}"
-          echo "Checking existence of $IMAGE_TAG..."
-          if docker manifest inspect "$IMAGE_TAG" > /dev/null 2>&1; then
-            echo -e "✅ ${GREEN} Image exists in registry"
-            echo "IMAGE_EXISTS=true" >> "$GITHUB_OUTPUT"
-          else
-            echo -e "🔍 ${RED} Image does not exist in registry"
-            echo "IMAGE_EXISTS=false" >> "$GITHUB_OUTPUT"
-          fi
+          registry-username: ${{ github.actor }}
+          registry-password: ${{ secrets.GITHUB_TOKEN }}
+          image-name: deploy.${{ inputs.imageName }}
+          tag-version: ${{ needs.build.outputs.tag-version }}
 
   push-image:
     name: Push image to Registry
@@ -283,41 +273,26 @@ jobs:
             src
           sparse-checkout-cone-mode: false
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+      - name: 🐳 Docker Setup
+        uses: felipementel/reusable-workflows/.github/actions/tools/docker/setup@main
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          version: latest
-          buildkitd-flags: --debug
-          platforms: linux/amd64,linux/arm64
-
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
+      - name: 🐳 Docker Login
+        uses: felipementel/reusable-workflows/.github/actions/tools/docker/login@main
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          registry-username: ${{ github.actor }}
+          registry-password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
+      - name: 🐳 Docker Build and Push
+        uses: felipementel/reusable-workflows/.github/actions/tools/docker/buildx@main
         with:
-          images: |
-            ghcr.io/${{ github.actor }}/deploy.${{ inputs.imageName }}
-
-      - name: Build and push ghcr
-        uses: docker/build-push-action@v5
-        with:
+          registry: ghcr.io
+          registry-username: ${{ github.actor }}
+          image-name: deploy.${{ inputs.imageName }}
+          tag-version: ${{ needs.build.outputs.tag-version }}
+          dockerfile: ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/Dockerfile
           context: ${{ inputs.projectBaseDir }}
-          file: ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/Dockerfile
-          push: true
-          tags: |
-            ghcr.io/${{ github.actor }}/deploy.${{ inputs.imageName }}:latest
-            ghcr.io/${{ github.actor }}/deploy.${{ inputs.imageName }}:${{ needs.build.outputs.tag-version }}
-          labels: |
-            ${{ steps.meta.outputs.labels }}
+          push: 'true'
 
       - name: Write to workflow job summary DEPLOY
         run: |

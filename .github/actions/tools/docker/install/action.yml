@@ -1,5 +1,5 @@
-name: 'Docker Setup'
-description: 'Sets up Docker environment.'
+name: 'Docker Install'
+description: 'Installs Docker engine on the runner (for self-hosted runners without Docker).'
 
 runs:
   using: 'composite'
@@ -12,4 +12,5 @@ runs:
         sudo curl -fsSL https://get.docker.com -o install-docker.sh
         sudo sh install-docker.sh
         sudo usermod -aG docker $(whoami)
+        sudo chmod 666 /var/run/docker.sock
         docker --version
