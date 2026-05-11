@@ -21,7 +21,7 @@ inputs:
   upload-to-security:
     description: 'Upload results to GitHub Security tab'
     required: false
-    default: true
+    default: 'true'
   scan-type:
     description: 'Type of scan (image, fs, license)'
     required: true
@@ -37,7 +37,7 @@ inputs:
   ignore-unfixed:
     description: 'Ignore unpatched/unfixed vulnerabilities'
     required: false
-    default: false
+    default: 'false'
   trivyignores:
     description: 'Path to trivyignore file (e.g., .trivyignore.yaml). Leave empty to skip.'
     required: false
@@ -45,7 +45,7 @@ inputs:
   exit-code:
     description: 'Exit code when vulnerabilities are found (0 or 1)'
     required: false
-    default: 0
+    default: '0'
   category:
     description: 'Unique category for SARIF upload (required when multiple Trivy scans run in same job)'
     required: false
