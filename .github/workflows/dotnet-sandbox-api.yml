@@ -160,13 +160,19 @@ jobs:
           projectBaseDir: ${{ inputs.projectBaseDir }}
           mainProject: ${{ inputs.mainProject }}
 
-      - name: Git Tag
-        uses: felipementel/reusable-workflows/.github/actions/git/tag@main
-        id: github-tag
+      - name: 🔍 Check Tag
+        id: tag-check
+        uses: felipementel/reusable-workflows/.github/actions/git/tag-check@main
         with:
           tag: ${{ steps.get-version.outputs.TAG }}
           version_file: ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          fail_on_exists: true
+
+      - name: 🏷️ Create Tag
+        id: github-tag
+        uses: felipementel/reusable-workflows/.github/actions/git/tag-create@main
+        with:
+          tag: ${{ steps.get-version.outputs.TAG }}
 
       - name: 🛠️ Setup .NET version ${{ inputs.dotnetVersion }}
         uses: actions/setup-dotnet@v4
@@ -220,15 +226,16 @@ jobs:
           java-version: ${{ env.javaVersion }}
           java-distro: ${{ env.javaDistro }}
 
-      - name: 🐳 Docker Build (local, for Snyk scan)
+      - name: 🐳 Docker Build (local, for Security scan)
         uses: felipementel/reusable-workflows/.github/actions/tools/docker/buildx@main
         with:
           registry: ghcr.io
           registry-username: ${{ github.actor }}
           image-name: deploy.${{ inputs.imageName }}
-          tag-version: ${{ github.sha }}
+          tag-version: ${{ steps.get-version.outputs.TAG }}
           dockerfile: ${{ inputs.dockerFileFullPath }}
           context: ${{ inputs.dockerBuildContext }}
+          platforms: 'linux/amd64'
           push: 'false'
 
       - name: 🍵 Snyk Security Scan
@@ -238,7 +245,7 @@ jobs:
           projectBaseDir: ${{ inputs.projectBaseDir }}
           mainProject: ${{ inputs.mainProject }}
           solutionFileName: ${{ inputs.solutionFileName }}
-          imageName: ghcr.io/${{ github.actor }}/deploy.${{ inputs.imageName }}:${{ github.sha }}
+          imageName: ghcr.io/${{ github.actor }}/deploy.${{ inputs.imageName }}:${{ steps.get-version.outputs.TAG }}
           docker-file-full-path: ${{ inputs.dockerFileFullPath }}
           docker-build-context: ${{ inputs.dockerBuildContext }}
 
