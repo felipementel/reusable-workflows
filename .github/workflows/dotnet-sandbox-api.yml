@@ -277,10 +277,10 @@ jobs:
           trivyignores: ${{ steps.check-trivyignore.outputs.path }}
           category: 'trivy-fs-license'
 
-      - name: Run Trivy vulnerability scanner
+      - name: 🔎 Trivy - Image Scan (vuln, secret)
         uses: felipementel/reusable-workflows/.github/actions/tools/security/trivy-scan@main
         with:
-          image-ref: ${{ inputs.imageName }}:${{ github.sha }}
+          image-ref: ghcr.io/${{ github.actor }}/deploy.${{ inputs.imageName }}:${{ steps.get-version.outputs.TAG }}
           scan-type: 'image'
           format: 'sarif'
           output-file: 'trivy-image-results.sarif'
