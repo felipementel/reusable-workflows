@@ -1,0 +1,98 @@
+﻿name: Deploy to Azure Container Apps ☁️
+run-name: "${{ github.actor }} - ${{ github.run_id }}"
+
+#Secrets on Caller: AZURE_CREDENTIALS
+#VARS on Caller: AZURE_RG, AZURE_ACAE_BASE
+on:
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        description: 'Deployment environment (dev, hml, prd)'
+        required: true
+        default: 'DEV'
+      tagVersion:
+        type: string
+        description: 'Image tag version to deploy (e.g. 1.0.0)'
+        required: true
+      imageName:
+        type: string
+        description: 'Image name used in GHCR (e.g. usuariosapi)'
+        required: true
+      msgCanalDeploy:
+        type: string
+        description: 'Message to display in the deployment summary'
+        required: false
+        default: ''
+      azureRgBase:
+        type: string
+        description: 'Base Azure Resource Group name (env suffix appended for non-prd)'
+        required: true
+      acaeBaseName:
+        type: string
+        description: 'Base Container App Environment name (e.g. cae-myorg)'
+        required: true
+      healthCheckPath:
+        type: string
+        description: 'HTTP path for post-deploy health check'
+        required: false
+        default: '/health/live'
+      deployPollMaxAttempts:
+        type: string
+        description: 'Max polling attempts for revision readiness and health check'
+        required: false
+        default: '20'
+      deployPollIntervalSeconds:
+        type: string
+        description: 'Seconds between polling attempts'
+        required: false
+        default: '15'
+    secrets:
+      AZURE_CREDENTIALS:
+        required: true
+        description: 'Azure service principal credentials JSON'
+
+jobs:
+  deploy-aca:
+    name: Deploy to Azure Container Apps
+    environment: ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: 🧾 Compute Azure Container App names
+        id: naming
+        uses: felipementel/reusable-workflows/.github/actions/azure/aca-naming@main
+        with:
+          environment: ${{ inputs.environment }}
+          azure-rg-base: ${{ inputs.azureRgBase }}
+          acae-base-name: ${{ inputs.acaeBaseName }}
+          repo-name: ${{ github.event.repository.name }}
+
+      - name: 🚀 Deploy to Azure Container App
+        id: deploy
+        uses: felipementel/reusable-workflows/.github/actions/azure/aca-deploy@main
+        with:
+          azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          aca-name: ${{ steps.naming.outputs.AZURE_ACA_NAME }}
+          rg-name: ${{ steps.naming.outputs.AZURE_RG_NAME }}
+          image: ghcr.io/${{ github.actor }}/deploy.${{ inputs.imageName }}:${{ inputs.tagVersion }}
+          health-check-path: ${{ inputs.healthCheckPath }}
+          poll-max-attempts: ${{ inputs.deployPollMaxAttempts }}
+          poll-interval-seconds: ${{ inputs.deployPollIntervalSeconds }}
+
+      - name: 📝 Deployment Summary
+        uses: felipementel/reusable-workflows/.github/actions/azure/aca-summary@main
+        with:
+          tag-version: ${{ inputs.tagVersion }}
+          now: ${{ github.run_id }}
+          environment: ${{ inputs.environment }}
+          aca-name: ${{ steps.naming.outputs.AZURE_ACA_NAME }}
+          acae-name: ${{ steps.naming.outputs.AZURE_ACAE_NAME }}
+          rg-name: ${{ steps.naming.outputs.AZURE_RG_NAME }}
+          fqdn: ${{ steps.deploy.outputs.FQDN }}
+          state: ${{ steps.deploy.outputs.STATE }}
+          msg: ${{ inputs.msgCanalDeploy }}

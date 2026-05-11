@@ -100,6 +100,13 @@ on:
       SAFETY_API_KEY:
         required: true
         description: 'Safety API Key'
+    outputs:
+      tag-version:
+        description: 'Semantic version tag from csproj'
+        value: ${{ jobs.build.outputs.tag-version }}
+      image-exists:
+        description: 'Whether the image already exists in the registry'
+        value: ${{ jobs.check-image.outputs.image-exists }}
 env:
   RED: '\033[0;31m'
   GREEN: '\033[0;32m'
@@ -318,7 +325,7 @@ jobs:
 
   check-image:
     name: Check if image exists
-    if: ${{ inputs.buildMode == 'Build + Tag Validation' }}
+    if: ${{ inputs.buildMode == 'Build + Tag Validation' || inputs.buildMode == 'Build + Tag Validation + Deploy' }}
     environment: ${{ inputs.environment }}
     runs-on: ubuntu-latest
     outputs:
@@ -382,24 +389,6 @@ jobs:
         run: |
           SUMMARY=$'
           # Image publicada\n
-          | versao | data | 
-          |--|--|
-          | ${{ needs.build.outputs.tag-version }} | ${{ needs.build.outputs.now }} | \n
-          Mensagem: ${{ inputs.msgCanalDeploy }}\n'
-          echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
-
-  publish:
-    name: Publish
-    if: ${{ inputs.buildMode == 'Build + Tag Validation + Deploy' }}
-    needs: [push-image]
-    environment: ${{ inputs.environment }}
-    # if: ${{ github.event.pull_request.merged && github.event.pull_request.state == 'closed' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Write to workflow job summary DEPLOY
-        run: |
-          SUMMARY=$'
-          # Detalhes sobre publicação\n
           | versao | data | 
           |--|--|
           | ${{ needs.build.outputs.tag-version }} | ${{ needs.build.outputs.now }} | \n
