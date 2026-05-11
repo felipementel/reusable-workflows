@@ -244,7 +244,7 @@ jobs:
           docker-build-context: ${{ inputs.dockerBuildContext }}
 
       - name: Safety Python Dependency Check
-        uses: felipementel/reusable-workflows/.github/actions/tools/security/safety@main
+        uses: felipementel/reusable-workflows/.github/actions/tools/security/safety-python@main
         with:
           api-key: ${{ secrets.SAFETY_API_KEY }}
 

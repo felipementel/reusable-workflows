@@ -21,7 +21,7 @@ inputs:
   upload-to-security:
     description: 'Upload results to GitHub Security tab'
     required: false
-    default: 'true'
+    default: true
   scan-type:
     description: 'Type of scan (image, fs, license)'
     required: true
@@ -37,7 +37,7 @@ inputs:
   ignore-unfixed:
     description: 'Ignore unpatched/unfixed vulnerabilities'
     required: false
-    default: 'false'
+    default: false
   trivyignores:
     description: 'Path to trivyignore file (e.g., .trivyignore.yaml). Leave empty to skip.'
     required: false
@@ -45,7 +45,7 @@ inputs:
   exit-code:
     description: 'Exit code when vulnerabilities are found (0 or 1)'
     required: false
-    default: '0'
+    default: 0
   category:
     description: 'Unique category for SARIF upload (required when multiple Trivy scans run in same job)'
     required: false
@@ -60,7 +60,7 @@ runs:
   using: 'composite'
   steps:
 
-    - name: 🔍 Scan with Trivy (image)
+    - name: 🔍 Scan with Trivy (image) - SARIF report
       if: ${{ inputs.scan-type == 'image' }}
       id: scan-image
       uses: aquasecurity/trivy-action@v0.36.0
@@ -72,9 +72,21 @@ runs:
         scan-type: ${{ inputs.scan-type }}
         ignore-unfixed: ${{ inputs.ignore-unfixed }}
         trivyignores: ${{ inputs.trivyignores }}
-        exit-code: ${{ inputs.exit-code }}
+        exit-code: '0'
 
-    - name: 🔍 Scan with Trivy (filesystem)
+    - name: 🚫 Block on severity violations (image)
+      if: ${{ inputs.scan-type == 'image' && inputs.exit-code == '1' }}
+      uses: aquasecurity/trivy-action@v0.36.0
+      with:
+        image-ref: ${{ inputs.image-ref }}
+        format: 'table'
+        severity: ${{ inputs.severity }}
+        scan-type: ${{ inputs.scan-type }}
+        ignore-unfixed: ${{ inputs.ignore-unfixed }}
+        trivyignores: ${{ inputs.trivyignores }}
+        exit-code: '1'
+
+    - name: 🔍 Scan with Trivy (filesystem) - SARIF report
       if: ${{ inputs.scan-type == 'fs' }}
       id: scan-fs
       uses: aquasecurity/trivy-action@v0.36.0
@@ -87,9 +99,22 @@ runs:
         severity: ${{ inputs.severity }}
         ignore-unfixed: ${{ inputs.ignore-unfixed }}
         trivyignores: ${{ inputs.trivyignores }}
-        exit-code: ${{ inputs.exit-code }}
+        exit-code: '0'
 
-    - name: 🔍 Scan with Trivy (license)
+    - name: 🚫 Block on severity violations (filesystem)
+      if: ${{ inputs.scan-type == 'fs' && inputs.exit-code == '1' }}
+      uses: aquasecurity/trivy-action@v0.36.0
+      with:
+        scan-type: ${{ inputs.scan-type }}
+        scan-ref: ${{ inputs.scan-ref }}
+        scanners: ${{ inputs.scanners }}
+        format: 'table'
+        severity: ${{ inputs.severity }}
+        ignore-unfixed: ${{ inputs.ignore-unfixed }}
+        trivyignores: ${{ inputs.trivyignores }}
+        exit-code: '1'
+
+    - name: 🔍 Scan with Trivy (license) - SARIF report
       if: ${{ inputs.scan-type == 'license' }}
       id: scan-license
       uses: aquasecurity/trivy-action@v0.36.0
@@ -102,7 +127,20 @@ runs:
         severity: ${{ inputs.severity }}
         ignore-unfixed: ${{ inputs.ignore-unfixed }}
         trivyignores: ${{ inputs.trivyignores }}
-        exit-code: ${{ inputs.exit-code }}
+        exit-code: '0'
+
+    - name: 🚫 Block on severity violations (license)
+      if: ${{ inputs.scan-type == 'license' && inputs.exit-code == '1' }}
+      uses: aquasecurity/trivy-action@v0.36.0
+      with:
+        scan-type: ${{ inputs.scan-type }}
+        scan-ref: ${{ inputs.scan-ref }}
+        scanners: ${{ inputs.scanners }}
+        format: 'table'
+        severity: ${{ inputs.severity }}
+        ignore-unfixed: ${{ inputs.ignore-unfixed }}
+        trivyignores: ${{ inputs.trivyignores }}
+        exit-code: '1'
 
     - name: 📤 Upload Trivy scan results to GitHub Security
       if: ${{ inputs.upload-to-security == 'true' && inputs.format == 'sarif' && always() }}
