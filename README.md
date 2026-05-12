@@ -181,7 +181,9 @@
 
 | Nome | Obrigatório | Descrição |
 |------|:-----------:|-----------|
-| `AZURE_CREDENTIALS` | ✅ | JSON com as credenciais do Service Principal Azure (saída de `az ad sp create-for-rbac`) |
+| `AZURE_CLIENT_ID` | ✅ | Client ID do Service Principal Azure para autenticação OIDC |
+| `AZURE_TENANT_ID` | ✅ | Tenant ID do Azure AD para autenticação OIDC |
+| `AZURE_SUBSCRIPTION_ID` | ✅ | Subscription ID do Azure para autenticação OIDC |
 | `AZURE_STATIC_WEB_APPS_API_TOKEN` | ✅ | Token de deploy do Azure Static Web Apps |
 | `BADGE_GIST_TOKEN` | ⬜ | Token do Gist para atualização do badge CI/CD |
 

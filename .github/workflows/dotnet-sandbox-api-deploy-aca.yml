@@ -56,9 +56,15 @@ on:
         required: false
         default: '15'
     secrets:
-      AZURE_CREDENTIALS:
+      AZURE_CLIENT_ID:
         required: true
-        description: 'Azure service principal credentials JSON'
+        description: 'Azure Client ID for OIDC authentication'
+      AZURE_TENANT_ID:
+        required: true
+        description: 'Azure Tenant ID for OIDC authentication'
+      AZURE_SUBSCRIPTION_ID:
+        required: true
+        description: 'Azure Subscription ID for OIDC authentication'
 
 jobs:
   deploy-aca:
@@ -67,6 +73,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
+      id-token: write
       contents: read
       packages: read
 
@@ -84,7 +91,9 @@ jobs:
         id: deploy
         uses: felipementel/reusable-workflows/.github/actions/azure/aca-deploy@main
         with:
-          azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           aca-name: ${{ steps.naming.outputs.AZURE_ACA_NAME }}
           rg-name: ${{ steps.naming.outputs.AZURE_RG_NAME }}
           image: ${{ inputs.registry }}/${{ inputs.registryUsername || github.actor }}/deploy.${{ inputs.imageName }}:${{ inputs.tagVersion }}

@@ -1,0 +1,104 @@
+name: Python API — Build & Deploy (Caller Example)
+run-name: "${{ github.actor }} | ${{ inputs.buildMode }} | ${{ inputs.environment }}"
+
+# ---------------------------------------------------------------------------
+# EXEMPLO de caller para os workflows:
+#   - felipementel/reusable-workflows/.github/workflows/python-sandbox-api-build.yml
+#   - felipementel/reusable-workflows/.github/workflows/python-sandbox-api-deploy-aca.yml
+
+# Pré-requisitos no repositório caller:
+#   Secrets: GITLEAKS_LICENSE, GH_PACKAGES_TOKEN, AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID
+#   Secrets opcionais: CODECOV_TOKEN, BADGE_GIST_TOKEN
+#   Environments: DEV, HML, PRD (Settings → Environments)
+#   Variables (por Environment): AZURE_RG, AZURE_ACAE_BASE, BADGE_GIST_ID
+# ---------------------------------------------------------------------------
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+  workflow_dispatch:
+    inputs:
+      buildMode:
+        description: "Qual ação deseja fazer?"
+        required: true
+        default: 'Build'
+        type: choice
+        options:
+          - Build
+          - Build + Push
+          - Build + Push + Deploy
+      environment:
+        description: "Selecione o ambiente de implantação"
+        required: true
+        default: 'DEV'
+        type: environment
+
+jobs:
+  build:
+    name: Build
+    uses: felipementel/reusable-workflows/.github/workflows/python-sandbox-api-build.yml@main
+    with:
+      # Passa 'Build + Push' para o workflow quando o caller selecionar qualquer
+      # opção que inclua push (incluindo a opção com deploy)
+      buildMode: >-
+        ${{
+          github.event_name != 'workflow_dispatch' && 'Build' ||
+          startsWith(inputs.buildMode, 'Build + Push') && 'Build + Push' ||
+          'Build'
+        }}
+      environment: ${{ inputs.environment || 'DEV' }}
+      pythonVersion: '3.14'
+      projectName: 'my-python-api'
+      imageName: 'my-python-api'
+      appDir: 'src'
+      mainFile: 'main.py'
+      sparseCheckout: 'src/'
+      coverageThreshold: 80
+      dockerfileFolder: 'docker'
+      registry: 'ghcr.io'
+      # registryUsername: ''  # Deixe vazio para usar github.actor (padrão ghcr.io)
+    permissions:
+      security-events: write
+      contents: write
+      id-token: write
+      packages: write
+    secrets:
+      GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+      GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      BADGE_GIST_TOKEN: ${{ secrets.BADGE_GIST_TOKEN }}
+      # REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}  # Opcional — padrão: GH_PACKAGES_TOKEN
+
+  deploy:
+    name: Deploy to ACA
+    if: >
+      github.event_name == 'workflow_dispatch' &&
+      inputs.buildMode == 'Build + Push + Deploy' &&
+      needs.build.outputs.image-exists == 'false'
+    needs: [build]
+    uses: felipementel/reusable-workflows/.github/workflows/python-sandbox-api-deploy-aca.yml@main
+    with:
+      environment: ${{ inputs.environment || 'DEV' }}
+      tagVersion: ${{ needs.build.outputs.tag-version }}
+      imageName: 'my-python-api'
+      registry: 'ghcr.io'
+      # registryUsername: ''  # Deixe vazio para usar github.actor (padrão ghcr.io)
+      azureRgBase: ${{ vars.AZURE_RG }}
+      acaeBaseName: ${{ vars.AZURE_ACAE_BASE }}
+      healthCheckPath: '/health'
+      deployPollMaxAttempts: 30
+      deployPollIntervalSeconds: 20
+    permissions:
+      id-token: write
+      contents: read
+      packages: read
+    secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}

@@ -1,0 +1,89 @@
+name: React Web — Build & Deploy (Caller Example)
+run-name: "${{ github.actor }} | ${{ inputs.buildMode }} | ${{ inputs.environment }}"
+
+# ---------------------------------------------------------------------------
+# EXEMPLO de caller para os workflows:
+#   - felipementel/reusable-workflows/.github/workflows/react-sandbox-web-build.yml
+#   - felipementel/reusable-workflows/.github/workflows/react-sandbox-web-deploy-swa.yml
+#
+# Pré-requisitos no repositório caller:
+#   Secrets: GITLEAKS_LICENSE, AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID, AZURE_STATIC_WEB_APPS_API_TOKEN
+#   Secrets opcionais: BADGE_GIST_TOKEN, APPLICATIONINSIGHTS_CONNECTION_STRING, VITE_AUTH_API_KEY
+#   Environments: DEV, HML, PRD (Settings → Environments)
+#   Variables (por Environment): AZURE_STATIC_WEBAPP_NAME, AZURE_RESOURCE_GROUP,
+#                                BADGE_GIST_ID, VITE_* (dependem do projeto)
+# ---------------------------------------------------------------------------
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'source/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'source/**'
+  workflow_dispatch:
+    inputs:
+      buildMode:
+        description: "Qual ação deseja fazer?"
+        required: true
+        default: 'Build'
+        type: choice
+        options:
+          - Build
+          - Build + Deploy
+      environment:
+        description: "Selecione o ambiente de implantação"
+        required: true
+        default: 'DEV'
+        type: environment
+
+jobs:
+  build:
+    name: Build
+    uses: felipementel/reusable-workflows/.github/workflows/react-sandbox-web-build.yml@main
+    with:
+      environment: ${{ inputs.environment || 'DEV' }}
+      nodeVersion: '24.x'
+      workingDirectory: './source'
+      sparseCheckout: 'source/'
+    permissions:
+      security-events: write
+      contents: write
+      id-token: write
+    secrets:
+      GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+      BADGE_GIST_TOKEN: ${{ secrets.BADGE_GIST_TOKEN }}
+      APPLICATIONINSIGHTS_CONNECTION_STRING: ${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}
+      VITE_AUTH_API_KEY: ${{ secrets.VITE_AUTH_API_KEY }}
+
+  deploy:
+    name: Deploy to SWA
+    if: >
+      github.event_name == 'workflow_dispatch' &&
+      inputs.buildMode == 'Build + Deploy'
+    needs: [build]
+    uses: felipementel/reusable-workflows/.github/workflows/react-sandbox-web-deploy-swa.yml@main
+    with:
+      environment: ${{ inputs.environment || 'DEV' }}
+      appName: ${{ needs.build.outputs.app-name }}
+      # URL do site publicado — usada pelo OWASP ZAP DAST após o deploy
+      url: 'https://my-app.azurestaticapps.net'
+      appLocation: './dist'
+      apiLocation: ''
+      outputLocation: ''
+      allowIssueWriting: false
+      failAction: false
+      cmdOptions: '-a'
+      nodeVersion: '24.x'
+      workingDirectory: './source'
+    permissions:
+      id-token: write
+      contents: read
+    secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AZURE_STATIC_WEB_APPS_API_TOKEN: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+      BADGE_GIST_TOKEN: ${{ secrets.BADGE_GIST_TOKEN }}

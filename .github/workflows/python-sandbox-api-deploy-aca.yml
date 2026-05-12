@@ -53,9 +53,15 @@ on:
         required: false
         default: 20
     secrets:
-      AZURE_CREDENTIALS:
+      AZURE_CLIENT_ID:
         required: true
-        description: 'Azure Service Principal credentials JSON (output of az ad sp create-for-rbac)'
+        description: 'Azure Client ID for OIDC authentication'
+      AZURE_TENANT_ID:
+        required: true
+        description: 'Azure Tenant ID for OIDC authentication'
+      AZURE_SUBSCRIPTION_ID:
+        required: true
+        description: 'Azure Subscription ID for OIDC authentication'
 
 env:
   # Colors for output
@@ -74,6 +80,7 @@ jobs:
     environment: ${{ inputs.environment }}
     runs-on: self-hosted
     permissions:
+      id-token: write
       contents: read
       packages: read
 
@@ -81,7 +88,9 @@ jobs:
       - name: 🔐 Azure CLI Login
         uses: azure/login@v3
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: 🧾 Compute Azure Container Apps names from repo
         id: naming

@@ -2,8 +2,14 @@ name: Azure Container Apps Deploy
 description: Logs in to Azure, updates Container App image, polls for revision readiness and health endpoint
 
 inputs:
-  azure-credentials:
-    description: 'Azure service principal credentials (JSON)'
+  azure-client-id:
+    description: 'Azure Client ID for OIDC authentication'
+    required: true
+  azure-tenant-id:
+    description: 'Azure Tenant ID for OIDC authentication'
+    required: true
+  azure-subscription-id:
+    description: 'Azure Subscription ID for OIDC authentication'
     required: true
   aca-name:
     description: 'Azure Container App name'
@@ -41,7 +47,9 @@ runs:
     - name: 🔐 Azure CLI Login
       uses: azure/login@v3
       with:
-        creds: ${{ inputs.azure-credentials }}
+        client-id: ${{ inputs.azure-client-id }}
+        tenant-id: ${{ inputs.azure-tenant-id }}
+        subscription-id: ${{ inputs.azure-subscription-id }}
 
     - name: 🚀 Update Azure Container App image
       shell: bash
