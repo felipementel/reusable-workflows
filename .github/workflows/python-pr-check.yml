@@ -33,6 +33,18 @@ on:
         required: false
         type: string
         default: ''
+      sonar_exclusions:
+        description: 'Paths to exclude from SonarCloud analysis (comma separated)'
+        required: false
+        type: string
+        default: ''
+    secrets:
+      SONAR_TOKEN:
+        required: false
+        description: 'SonarCloud token'
+      SONAR_PROJECT_KEY:
+        required: false
+        description: 'SonarCloud project key'
   workflow_dispatch:
     inputs:
       git_leaks:
@@ -285,6 +297,17 @@ jobs:
           name: coverage-report-unit
           path: tests/results/htmlcov/
           retention-days: 30
+
+      - name: 📸 SonarCloud Analysis
+        uses: felipementel/reusable-workflows/.github/actions/tools/code-quality/sonar-cloud-python@main
+        with:
+          has-tests: ${{ steps.check-tests.outputs.HAS_TESTS }}
+          sonar-project-key: ${{ secrets.SONAR_PROJECT_KEY }}
+          sonar-organization: ${{ vars.SONAR_ORGANIZATION }}
+          sonar-token: ${{ secrets.SONAR_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          sonar-exclusions: ${{ inputs.sonar_exclusions }}
+          app-dir: ${{ inputs.app_dir }}
 
   # Job 3: Validação de versão
   version-check:

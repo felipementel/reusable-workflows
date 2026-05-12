@@ -17,53 +17,72 @@
 
 ## Composite Actions
 
-### DevSecOps / Security Tools
+### Security
 
 | Action | Descrição |
 |--------|-----------|
-| [`tools-trivy-scan`](.github/actions/tools-trivy-scan) | Scan de vulnerabilidades, licenças, secrets e misconfigurations com **Trivy** |
-| [`tools-snyk-dotnet`](.github/actions/tools-snyk-dotnet) | Scan de segurança de container e dependências .NET com **Snyk** |
-| [`tools-git-leaks`](.github/actions/tools-git-leaks) | Detecção de secrets no repositório com **GitLeaks** |
-| [`tools-spectral`](.github/actions/tools-spectral) | Linting de OpenAPI specs com **Spectral CLI** (rulesets DevOps Linter + OWASP) |
-| [`tools-sonar-cloud-dotnet`](.github/actions/tools-sonar-cloud-dotnet) | Análise de qualidade de código com **SonarCloud** |
-| [`tools-safety`](.github/actions/tools-safety) | Verificação de vulnerabilidades em dependências Python com **Safety CLI** |
-| [`tools-owasp-zap`](.github/actions/tools-owasp-zap) | Baseline scan com **OWASP ZAP** |
+| [`tools/security/trivy-scan`](.github/actions/tools/security/trivy-scan) | Scan de vulnerabilidades em imagens Docker com **Trivy** |
+| [`tools/security/snyk-dotnet`](.github/actions/tools/security/snyk-dotnet) | Container monitor e scan de vulnerabilidades com **Snyk** (upload SARIF) |
+| [`tools/security/giteaks`](.github/actions/tools/security/giteaks) | Detecção de secrets no repositório com **GitLeaks** |
+| [`tools/security/safety-python`](.github/actions/tools/security/safety-python) | Verificação de vulnerabilidades em dependências Python com **Safety CLI** |
+| [`tools/security/owasp-zap`](.github/actions/tools/security/owasp-zap) | Baseline scan com **OWASP ZAP** |
+
+### Code Quality
+
+| Action | Descrição |
+|--------|-----------|
+| [`tools/code-quality/spectral`](.github/actions/tools/code-quality/spectral) | Linting de OpenAPI specs com **Spectral CLI** (rulesets DevOps Linter + OWASP) |
+| [`tools/code-quality/sonar-cloud-dotnet`](.github/actions/tools/code-quality/sonar-cloud-dotnet) | Análise de qualidade de código .NET com **SonarCloud** |
+| [`tools/code-quality/sonar-cloud-python`](.github/actions/tools/code-quality/sonar-cloud-python) | Análise de qualidade de código Python com **SonarCloud** |
+| [`tools/code-quality/sonar-cloud-node`](.github/actions/tools/code-quality/sonar-cloud-node) | Análise de qualidade de código Node.js/React com **SonarCloud** |
 
 ### Docker
 
 | Action | Descrição |
 |--------|-----------|
-| [`tools-docker-setup`](.github/actions/tools-docker-setup) | Setup do ambiente Docker (QEMU + Buildx) |
-| [`tools-docker-push`](.github/actions/tools-docker-push) | Build e push de imagens para qualquer container registry |
-| [`tools-docker-check-image`](.github/actions/tools-docker-check-image) | Verificação se uma imagem já existe no registry |
+| [`tools/docker/setup`](.github/actions/tools/docker/setup) | Setup do ambiente Docker (QEMU + Buildx) |
+| [`tools/docker/login`](.github/actions/tools/docker/login) | Autenticação em container registry |
+| [`tools/docker/buildx`](.github/actions/tools/docker/buildx) | Build de imagens Docker com Buildx (multi-platform e export tar) |
+| [`tools/docker/push`](.github/actions/tools/docker/push) | Push de imagens para qualquer container registry |
+| [`tools/docker/check-image`](.github/actions/tools/docker/check-image) | Verificação se uma imagem já existe no registry |
+| [`tools/docker/install`](.github/actions/tools/docker/install) | Instalação do Docker engine no runner (self-hosted) |
+
+### Azure
+
+| Action | Descrição |
+|--------|-----------|
+| [`azure/aca-naming`](.github/actions/azure/aca-naming) | Geração de nomes de recursos Azure Container Apps (ACA, ACAE, RG) |
+| [`azure/aca-deploy`](.github/actions/azure/aca-deploy) | Login no Azure, atualização da imagem no Container App e polling de prontidão |
+| [`azure/aca-summary`](.github/actions/azure/aca-summary) | Escrita do resumo de deploy no GitHub Job Summary |
 
 ### .NET
 
 | Action | Descrição |
 |--------|-----------|
-| [`dotnet-get-version`](.github/actions/dotnet-get-version) | Extração de versão (Version, VersionPrefix, VersionSuffix) de um `.csproj` |
-| [`dotnet-test`](.github/actions/dotnet-test) | Execução de testes com cobertura, geração de relatórios e upload de artefatos |
+| [`dotnet/get-version`](.github/actions/dotnet/get-version) | Extração de versão (Version, VersionPrefix, VersionSuffix) de um `.csproj` |
+| [`dotnet/dotnet-test`](.github/actions/dotnet/dotnet-test) | Execução de testes com cobertura, geração de relatórios e upload de artefatos |
 
 ### Python
 
 | Action | Descrição |
 |--------|-----------|
-| [`python-get-version`](.github/actions/python-get-version) | Extração de versão do projeto Python |
-| [`python-code-quality`](.github/actions/python-code-quality) | Qualidade de código com flake8, black, isort, mypy |
+| [`python/python-get-version`](.github/actions/python/python-get-version) | Extração de versão do projeto Python |
+| [`python/python-code-quality`](.github/actions/python/python-code-quality) | Qualidade de código com flake8, black, isort, mypy e compileall |
 
 ### Node.js / React
 
 | Action | Descrição |
 |--------|-----------|
-| [`node-get-package-data`](.github/actions/node-get-package-data) | Extração de versão do `package.json` |
-| [`react-env-values`](.github/actions/react-env-values) | Criação de `.env` para aplicações React |
+| [`node/node-get-package-data`](.github/actions/node/node-get-package-data) | Extração de versão do `package.json` |
+| [`node/react-env-values`](.github/actions/node/react-env-values) | Criação de `.env` para aplicações React |
 
-### Utilitários
+### Git / Utilitários
 
 | Action | Descrição |
 |--------|-----------|
-| [`github-tag`](.github/actions/github-tag) | Verificação e criação de tags Git |
-| [`gist-badge`](.github/actions/gist-badge) | Atualização de badges via Gist (Shields.io) |
+| [`git/tag-check`](.github/actions/git/tag-check) | Verificação se uma tag Git já existe no repositório remoto |
+| [`git/tag-create`](.github/actions/git/tag-create) | Criação de tag Git anotada e push para o repositório |
+| [`git/gist-badge`](.github/actions/git/gist-badge) | Atualização de badges via Gist (Shields.io) — suporta pyproject.toml e package.json |
 
 ---
 
@@ -76,11 +95,9 @@
 | [`dotnet-pr-check.yml`](.github/workflows/dotnet-pr-check.yml) | Validação de PRs para projetos .NET |
 | [`python-sandbox-api-build.yml`](.github/workflows/python-sandbox-api-build.yml) | Pipeline DevSecOps para APIs Python — build, testes, scans de segurança, push de imagem |
 | [`python-sandbox-api-deploy-aca.yml`](.github/workflows/python-sandbox-api-deploy-aca.yml) | Deploy de imagem para **Azure Container Apps** (Python) |
-| [`python-ci-cd-api.yml`](.github/workflows/python-ci-cd-api.yml) | CI/CD para APIs Python (legado — substituído pelos dois acima) |
 | [`python-pr-check.yml`](.github/workflows/python-pr-check.yml) | Validação de PRs para projetos Python |
 | [`react-sandbox-web-build.yml`](.github/workflows/react-sandbox-web-build.yml) | Pipeline DevSecOps para frontends React — build, scans de segurança, upload de artefato |
 | [`react-sandbox-web-deploy-swa.yml`](.github/workflows/react-sandbox-web-deploy-swa.yml) | Deploy de artefato para **Azure Static Web Apps** + OWASP ZAP DAST |
-| [`react-ci-cd-web.yml`](.github/workflows/react-ci-cd-web.yml) | CI/CD para aplicações React (legado — substituído pelos dois acima) |
 | [`react-pr-check.yml`](.github/workflows/react-pr-check.yml) | Validação de PRs para projetos React |
 | [`sandbox-console.yml`](.github/workflows/sandbox-console.yml) | Pipeline para aplicações console |
 
@@ -135,6 +152,8 @@
 | `CODECOV_TOKEN` | ⬜ | Token do Codecov para upload de cobertura |
 | `BADGE_GIST_TOKEN` | ⬜ | Token do Gist para atualização do badge de CI/CD |
 | `REGISTRY_PASSWORD` | ⬜ | Senha/token do registry. Omita para `ghcr.io` (usa `GH_PACKAGES_TOKEN` automaticamente) |
+| `SONAR_TOKEN` | ⬜ | Token de autenticação do SonarCloud |
+| `SONAR_PROJECT_KEY` | ⬜ | Chave do projeto no SonarCloud |
 
 ### `python-sandbox-api-deploy-aca.yml`
 
@@ -163,6 +182,8 @@
 | `BADGE_GIST_TOKEN` | ⬜ | Token do Gist para atualização do badge CI/CD (somente em `main`) |
 | `APPLICATIONINSIGHTS_CONNECTION_STRING` | ⬜ | Connection string do Application Insights (injetada no `.env`) |
 | `VITE_AUTH_API_KEY` | ⬜ | Chave de API de autenticação (usada em repositórios específicos) |
+| `SONAR_TOKEN` | ⬜ | Token de autenticação do SonarCloud |
+| `SONAR_PROJECT_KEY` | ⬜ | Chave do projeto no SonarCloud |
 
 **Variables** (Settings → Secrets and variables → Actions → Variables):
 

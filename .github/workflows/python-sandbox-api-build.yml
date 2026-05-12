@@ -62,6 +62,16 @@ on:
         required: false
         type: string
         default: 'docker'
+      openAPIFolder:
+        description: 'Path to folder that will receive the exported OpenAPI JSON (e.g. output_openapi). Leave empty to skip Spectral linting.'
+        required: false
+        type: string
+        default: ''
+      sonarExclusions:
+        description: 'Paths to exclude from SonarCloud analysis (comma separated)'
+        required: false
+        type: string
+        default: ''
       #registry
       registry:
         type: string
@@ -89,6 +99,12 @@ on:
       REGISTRY_PASSWORD:
         required: false
         description: 'Registry password/token. Defaults to GH_PACKAGES_TOKEN for ghcr.io'
+      SONAR_TOKEN:
+        required: false
+        description: 'SonarCloud token'
+      SONAR_PROJECT_KEY:
+        required: false
+        description: 'SonarCloud project key'
     outputs:
       tag-version:
         description: 'The version tag built and published'
@@ -266,6 +282,17 @@ jobs:
           name: codecov-umbrella
           fail_ci_if_error: false
 
+      - name: 📸 SonarCloud Analysis
+        uses: felipementel/reusable-workflows/.github/actions/tools/code-quality/sonar-cloud-python@main
+        with:
+          has-tests: ${{ steps.check-tests.outputs.HAS_TESTS }}
+          sonar-project-key: ${{ secrets.SONAR_PROJECT_KEY }}
+          sonar-organization: ${{ vars.SONAR_ORGANIZATION }}
+          sonar-token: ${{ secrets.SONAR_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          sonar-exclusions: ${{ inputs.sonarExclusions }}
+          app-dir: ${{ inputs.appDir }}
+
       - name: 🎯 Generate coverage badge
         if: ${{ steps.check-tests.outputs.HAS_TESTS == 'true' }}
         run: |
@@ -316,6 +343,28 @@ jobs:
         uses: GreenNexus-Core/gh-actions/.github/actions/python-code-quality@main
         with:
           app_dir: ${{ inputs.appDir }}
+
+      - name: 🔨 Export OpenAPI JSON from FastAPI
+        if: ${{ inputs.openAPIFolder != '' }}
+        shell: bash
+        run: |
+          mkdir -p ./${{ inputs.openAPIFolder }}
+          MAIN_MODULE=$(basename "${{ inputs.mainFile }}" .py)
+          python -c "
+          import json, sys, importlib
+          sys.path.insert(0, '${{ inputs.appDir }}')
+          mod = importlib.import_module('${MAIN_MODULE}')
+          with open('./${{ inputs.openAPIFolder }}/openapi.json', 'w') as f:
+              json.dump(mod.app.openapi(), f, indent=2)
+          print('OpenAPI JSON exported successfully')
+          "
+
+      - name: 🚀 Spectral OpenAPI Lint
+        if: ${{ inputs.openAPIFolder != '' }}
+        uses: felipementel/reusable-workflows/.github/actions/tools/code-quality/spectral@main
+        with:
+          openapi-files-path: ./${{ inputs.openAPIFolder }}
+          node-version: '22'
 
       - name: 🧾 Write to workflow job summary
         run: |

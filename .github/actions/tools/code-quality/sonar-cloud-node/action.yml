@@ -1,0 +1,62 @@
+name: 'SonarCloud Analysis - Node.js'
+description: 'Sets up and runs SonarCloud analysis for Node.js/React projects with or without test coverage.'
+
+inputs:
+  has-tests:
+    description: 'Whether tests were run and coverage should be included (true/false)'
+    required: true
+    default: 'false'
+  sonar-project-key:
+    description: 'SonarCloud project key'
+    required: true
+  sonar-organization:
+    description: 'SonarCloud organization'
+    required: true
+  sonar-token:
+    description: 'SonarCloud token'
+    required: true
+  github-token:
+    description: 'GitHub token'
+    required: true
+  sonar-exclusions:
+    description: 'Paths to exclude from Sonar analysis (comma separated)'
+    required: false
+    default: ''
+  working-directory:
+    description: 'Working directory where package.json and source are located (projectBaseDir for the scanner)'
+    required: false
+    default: '.'
+  coverage-report:
+    description: 'Path to the LCOV coverage report (relative to working-directory)'
+    required: false
+    default: 'coverage/lcov.info'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 📸 SonarCloud Analysis (Test ✅, Sonar ✅)
+      if: ${{ inputs.has-tests == 'true' }}
+      uses: SonarSource/sonarcloud-github-action@v3
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        SONAR_TOKEN: ${{ inputs.sonar-token }}
+      with:
+        projectBaseDir: ${{ inputs.working-directory }}
+        args: >
+          -Dsonar.projectKey=${{ inputs.sonar-project-key }}
+          -Dsonar.organization=${{ inputs.sonar-organization }}
+          -Dsonar.javascript.lcov.reportPaths=${{ inputs.coverage-report }}
+          -Dsonar.exclusions=${{ inputs.sonar-exclusions }}
+
+    - name: 📸 SonarCloud Analysis (Test ⛔, Sonar ✅)
+      if: ${{ inputs.has-tests != 'true' }}
+      uses: SonarSource/sonarcloud-github-action@v3
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        SONAR_TOKEN: ${{ inputs.sonar-token }}
+      with:
+        projectBaseDir: ${{ inputs.working-directory }}
+        args: >
+          -Dsonar.projectKey=${{ inputs.sonar-project-key }}
+          -Dsonar.organization=${{ inputs.sonar-organization }}
+          -Dsonar.exclusions=${{ inputs.sonar-exclusions }}

@@ -24,6 +24,11 @@ on:
         required: false
         type: string
         default: 'source/'
+      sonarExclusions:
+        description: 'Paths to exclude from SonarCloud analysis (comma separated)'
+        required: false
+        type: string
+        default: ''
     secrets:
       GITLEAKS_LICENSE:
         required: true
@@ -37,6 +42,12 @@ on:
       VITE_AUTH_API_KEY:
         required: false
         description: 'Auth API Key for Data Processor .env injection'
+      SONAR_TOKEN:
+        required: false
+        description: 'SonarCloud token'
+      SONAR_PROJECT_KEY:
+        required: false
+        description: 'SonarCloud project key'
     outputs:
       tag-version:
         description: 'The version tag extracted from package.json'
@@ -292,6 +303,17 @@ jobs:
           echo -e "${GREEN} ✅ Build OK"
           ls -la dist/
         working-directory: ${{ inputs.workingDirectory }}
+
+      - name: 📸 SonarCloud Analysis
+        uses: felipementel/reusable-workflows/.github/actions/tools/code-quality/sonar-cloud-node@main
+        with:
+          has-tests: 'false'
+          sonar-project-key: ${{ secrets.SONAR_PROJECT_KEY }}
+          sonar-organization: ${{ vars.SONAR_ORGANIZATION }}
+          sonar-token: ${{ secrets.SONAR_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          sonar-exclusions: ${{ inputs.sonarExclusions }}
+          working-directory: ${{ inputs.workingDirectory }}
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v7

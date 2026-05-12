@@ -2,38 +2,17 @@ name: 'Spectral OpenAPI Lint'
 description: 'Runs Spectral lint with DevOps Linter and OWASP rulesets against OpenAPI specs and uploads results.'
 
 inputs:
-  openAPIFolder:
-    description: 'Path to the folder containing OpenAPI specification files inside the build output'
+  openapi-files-path:
+    description: 'Path to the folder containing the OpenAPI JSON/YAML files to lint (e.g. ./output_build/open-api)'
     required: true
   node-version:
     description: 'Node.js version'
     required: false
     default: '22'
-  projectBaseDir:
-    description: 'Path to project base directory'
-    required: true
-  mainProject:
-    description: 'The main project name'
-    required: true
-  needs-build:
-    description: 'Whether to run dotnet restore + build before linting (true/false)'
-    required: false
-    default: 'true'
 
 runs:
   using: 'composite'
   steps:
-    - name: 🍵 Restore dependencies
-      if: ${{ inputs.needs-build == 'true' }}
-      shell: bash
-      run: |
-        dotnet restore \
-          ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
-        dotnet build \
-          ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj \
-          --no-restore \
-          --output ./output_build
-
     - name: 🎗️ Setup Node.js ${{ inputs.node-version }}
       uses: actions/setup-node@v4
       with:
@@ -48,7 +27,7 @@ runs:
       continue-on-error: true
       run: |
         spectral lint \
-          "${{ inputs.projectBaseDir }}/${{ inputs.openAPIFolder }}/*.json" \
+          "${{ inputs.openapi-files-path }}/*.json" \
           --format stylish \
           --format html \
           --output.html spectral-devops-linter.html \
@@ -59,7 +38,7 @@ runs:
       continue-on-error: true
       run: |
         spectral lint \
-          "${{ inputs.projectBaseDir }}/${{ inputs.openAPIFolder }}/*.json" \
+          "${{ inputs.openapi-files-path }}/*.json" \
           --format stylish \
           --format html \
           --output.html spectral-owasp.html \

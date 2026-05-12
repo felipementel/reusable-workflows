@@ -1,16 +1,6 @@
 name: DevSecOps Dispatch ⚡
 run-name: "${{ github.actor }} - ${{ github.run_id }}"
 
-# SECRETS on Caller:
-  # - GITLEAKS_LICENSE
-  # - SNYK_TOKEN
-  # - SONAR_TOKEN
-  # - SONAR_PROJECT_KEY
-  # - SAFETY_API_KEY
-  # - REGISTRY_PASSWORD (if using private registry)
-# VARS on Caller:
-  # - SONAR_ORGANIZATION
-
 on:
   workflow_call:
     inputs:
@@ -309,15 +299,23 @@ jobs:
           trivyignores: ${{ steps.check-trivyignore.outputs.path }}
           category: 'trivy-image'
 
+      - name: � Build to generate OpenAPI JSON
+        if: ${{ inputs.openAPIFolder != '' }}
+        shell: bash
+        run: |
+          dotnet restore \
+            ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
+          dotnet build \
+            ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj \
+            --no-restore \
+            --output ./output_build
+
       - name: 🚀 Spectral OpenAPI Lint
         if: ${{ inputs.openAPIFolder != '' }}
         uses: felipementel/reusable-workflows/.github/actions/tools/code-quality/spectral@main
         with:
-          openAPIFolder: ${{ inputs.openAPIFolder }}
+          openapi-files-path: ./output_build/${{ inputs.openAPIFolder }}
           node-version: ${{ env.nodeVersion }}
-          projectBaseDir: ${{ inputs.projectBaseDir }}
-          mainProject: ${{ inputs.mainProject }}
-          needs-build: ${{ (!inputs.snyk && inputs.openAPIFolder != '') && 'true' || 'false' }}
 
       - name: 🏷️ Create Tag
         id: github-tag

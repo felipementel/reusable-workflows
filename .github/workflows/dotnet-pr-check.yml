@@ -192,11 +192,22 @@ jobs:
           docker-file-full-path: ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/Dockerfile
           docker-build-context: ${{ inputs.projectBaseDir }}
 
+      - name: 🔨 Build to generate OpenAPI JSON
+        if: ${{ inputs.openAPIFolder != '' }}
+        shell: bash
+        run: |
+          dotnet restore \
+            ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj
+          dotnet build \
+            ${{ inputs.projectBaseDir }}/${{ inputs.mainProject }}/${{ inputs.mainProject }}.csproj \
+            --no-restore \
+            --output ./output_build
+
       - name: 🎗️ Spectral OpenAPI Lint
         if: ${{ inputs.openAPIFolder != '' }}
         uses: felipementel/reusable-workflows/.github/actions/tools/code-quality/spectral@main
         with:
-          openAPIFolder: ${{ inputs.openAPIFolder }}
+          openapi-files-path: ./output_build/${{ inputs.openAPIFolder }}
           node-version: ${{ env.nodeVersion }}
           projectBaseDir: ${{ inputs.projectBaseDir }}
           mainProject: ${{ inputs.mainProject }}
