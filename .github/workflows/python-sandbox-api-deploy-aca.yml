@@ -1,0 +1,296 @@
+name: Python API Deploy to Azure Container Apps ☁️
+run-name: "${{ github.actor }} - ${{ inputs.environment }} - ${{ github.run_id }}"
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        description: 'Deployment environment (DEV, HML, PRD)'
+        required: true
+        default: 'DEV'
+      tagVersion:
+        type: string
+        description: 'Image tag version to deploy (e.g. 1.2.3)'
+        required: true
+      imageName:
+        type: string
+        description: 'Docker image name (e.g. myapi)'
+        required: true
+      #registry
+      registry:
+        type: string
+        description: 'Container registry URL (e.g. ghcr.io, docker.io, myacr.azurecr.io)'
+        required: false
+        default: 'ghcr.io'
+      registryUsername:
+        type: string
+        description: 'Registry username / org. Defaults to github.actor when empty (suitable for ghcr.io)'
+        required: false
+        default: ''
+      #azure
+      azureRgBase:
+        type: string
+        description: 'Base Azure Resource Group name (env suffix appended for non-prd, e.g. rg-myorg)'
+        required: true
+      acaeBaseName:
+        type: string
+        description: 'Base Container App Environment name (e.g. cae-myorg)'
+        required: true
+      healthCheckPath:
+        type: string
+        description: 'HTTP path for post-deploy health check'
+        required: false
+        default: '/health'
+      deployPollMaxAttempts:
+        type: number
+        description: 'Max polling attempts for revision readiness and health check'
+        required: false
+        default: 30
+      deployPollIntervalSeconds:
+        type: number
+        description: 'Seconds between polling attempts'
+        required: false
+        default: 20
+    secrets:
+      AZURE_CREDENTIALS:
+        required: true
+        description: 'Azure Service Principal credentials JSON (output of az ad sp create-for-rbac)'
+
+env:
+  # Colors for output
+  RED: '\033[0;31m'
+  GREEN: '\033[0;32m'
+  YELLOW: '\033[0;33m'
+  BLUE: '\033[0;34m'
+  RESET: '\033[0m'
+  BOLD: '\033[1m'
+
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+  deploy-aca:
+    name: Deploy to Azure Container Apps
+    environment: ${{ inputs.environment }}
+    runs-on: self-hosted
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: 🔐 Azure CLI Login
+        uses: azure/login@v3
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: 🧾 Compute Azure Container Apps names from repo
+        id: naming
+        shell: bash
+        run: |
+          REPO_NAME="${{ github.event.repository.name }}"
+          ENV_INPUT="$(echo "${{ inputs.environment }}" | tr '[:upper:]' '[:lower:]')"
+
+          case "$ENV_INPUT" in
+            dev|development)
+              ENV_SUFFIX="dev"
+              ;;
+            hml|homolog|homologacao|staging)
+              ENV_SUFFIX="hml"
+              ;;
+            prd|prod|production)
+              ENV_SUFFIX="prd"
+              ;;
+            *)
+              ENV_SUFFIX="$ENV_INPUT"
+              ;;
+          esac
+
+          # repo slug: lowercase, keep [a-z0-9-]
+          SLUG="$(echo "$REPO_NAME" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9-]+/-/g; s/^-+//; s/-+$//')"
+
+          # strip common prefixes/suffixes to get a short app name
+          APP="$SLUG"
+          APP="$(echo "$APP" | sed -E 's/^gn-api-//; s/^gn-//; s/-service$//; s/-api$//')"
+          APP="$(echo "$APP" | sed -E 's/^-+//; s/-+$//')"
+
+          RG_BASE="${{ inputs.azureRgBase }}"
+          ACAE_BASE="${{ inputs.acaeBaseName }}"
+
+          if [ "$ENV_SUFFIX" = "prd" ]; then
+            ACA_NAME="ca-${APP}"
+            ACAE_NAME="${ACAE_BASE}"
+            RG_NAME="${RG_BASE}"
+          else
+            ACA_NAME="ca-${APP}-${ENV_SUFFIX}"
+            ACAE_NAME="${ACAE_BASE}-${ENV_SUFFIX}"
+            RG_NAME="${RG_BASE}-${ENV_SUFFIX}"
+          fi
+
+          echo "AZURE_ACA_NAME=$ACA_NAME" >> $GITHUB_OUTPUT
+          echo "AZURE_ACAE_NAME=$ACAE_NAME" >> $GITHUB_OUTPUT
+          echo "AZURE_RG_NAME=$RG_NAME" >> $GITHUB_OUTPUT
+          echo "ENV_SUFFIX=$ENV_SUFFIX" >> $GITHUB_OUTPUT
+
+      - name: 🚀 Update Azure Container App image (no config changes)
+        shell: bash
+        run: |
+          set -euo pipefail
+          IMAGE="${{ inputs.registry }}/${{ inputs.registryUsername || github.actor }}/${{ inputs.imageName }}:${{ inputs.tagVersion }}"
+          echo "Updating image for: ${{ steps.naming.outputs.AZURE_ACA_NAME }} in RG: ${{ steps.naming.outputs.AZURE_RG_NAME }}"
+          echo "Image: ${IMAGE}"
+
+          az containerapp update \
+            --name "${{ steps.naming.outputs.AZURE_ACA_NAME }}" \
+            --resource-group "${{ steps.naming.outputs.AZURE_RG_NAME }}" \
+            --image "${IMAGE}"
+
+      - name: ⏱️ Wait for new revision with expected image
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          EXPECTED_IMAGE="${{ inputs.registry }}/${{ inputs.registryUsername || github.actor }}/${{ inputs.imageName }}:${{ inputs.tagVersion }}"
+          MAX_ATTEMPTS=${{ inputs.deployPollMaxAttempts }}
+          INTERVAL=${{ inputs.deployPollIntervalSeconds }}
+
+          echo -e "${BLUE} Expected image: ${EXPECTED_IMAGE}"
+          echo -e "${BLUE} Polling for revision readiness (attempts=${MAX_ATTEMPTS}, interval=${INTERVAL}s)"
+
+          READY_REV=""
+          READY_IMAGE=""
+          RUNNING_STATUS=""
+          LATEST_REV=""
+
+          for attempt in $(seq 1 "${MAX_ATTEMPTS}"); do
+            RUNNING_STATUS=$(az containerapp show \
+              --name "${{ steps.naming.outputs.AZURE_ACA_NAME }}" \
+              --resource-group "${{ steps.naming.outputs.AZURE_RG_NAME }}" \
+              --query "properties.runningStatus" \
+              --output tsv 2>/dev/null || true)
+
+            LATEST_REV=$(az containerapp show \
+              --name "${{ steps.naming.outputs.AZURE_ACA_NAME }}" \
+              --resource-group "${{ steps.naming.outputs.AZURE_RG_NAME }}" \
+              --query "properties.latestRevisionName" \
+              --output tsv 2>/dev/null || true)
+
+            READY_REV=$(az containerapp show \
+              --name "${{ steps.naming.outputs.AZURE_ACA_NAME }}" \
+              --resource-group "${{ steps.naming.outputs.AZURE_RG_NAME }}" \
+              --query "properties.latestReadyRevisionName" \
+              --output tsv 2>/dev/null || true)
+
+            READY_IMAGE=""
+            if [ -n "${READY_REV}" ] && [ "${READY_REV}" != "None" ]; then
+              READY_IMAGE=$(az containerapp revision list \
+                --name "${{ steps.naming.outputs.AZURE_ACA_NAME }}" \
+                --resource-group "${{ steps.naming.outputs.AZURE_RG_NAME }}" \
+                --query "[?name=='${READY_REV}'].properties.template.containers[0].image | [0]" \
+                --output tsv 2>/dev/null || true)
+            fi
+
+            echo -e "${BLUE} Attempt ${attempt}/${MAX_ATTEMPTS} => running=${RUNNING_STATUS} latest=${LATEST_REV} ready=${READY_REV} readyImage=${READY_IMAGE}"
+
+            if [ "${RUNNING_STATUS}" = "Running" ] && [ -n "${LATEST_REV}" ] && [ "${LATEST_REV}" = "${READY_REV}" ] && [ "${READY_IMAGE}" = "${EXPECTED_IMAGE}" ]; then
+              echo -e "${GREEN} ✅ Revision is ready and running expected image"
+              break
+            fi
+
+            if [ "${attempt}" -eq "${MAX_ATTEMPTS}" ]; then
+              echo -e "${RED} ❌ Timed out waiting for revision to become ready with expected image"
+              echo -e "${BLUE} Diagnostics:"
+              az containerapp revision list \
+                --name "${{ steps.naming.outputs.AZURE_ACA_NAME }}" \
+                --resource-group "${{ steps.naming.outputs.AZURE_RG_NAME }}" \
+                --query "[].{name:name,active:properties.active,createdTime:properties.createdTime,provisioningState:properties.provisioningState,runningState:properties.runningState,image:properties.template.containers[0].image}" \
+                --output table || true
+              exit 1
+            fi
+
+            sleep "${INTERVAL}"
+          done
+
+      - name: 🌐 Poll app endpoint after deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          FQDN=$(az containerapp show \
+            --name "${{ steps.naming.outputs.AZURE_ACA_NAME }}" \
+            --resource-group "${{ steps.naming.outputs.AZURE_RG_NAME }}" \
+            --query "properties.configuration.ingress.fqdn" \
+            --output tsv)
+
+          HEALTH_PATH="${{ inputs.healthCheckPath }}"
+          MAX_ATTEMPTS=${{ inputs.deployPollMaxAttempts }}
+          INTERVAL=${{ inputs.deployPollIntervalSeconds }}
+          URL="https://${FQDN}${HEALTH_PATH}"
+
+          echo -e "${BLUE} Polling URL: ${URL}"
+
+          for attempt in $(seq 1 "${MAX_ATTEMPTS}"); do
+            HTTP_CODE=$(curl -k -sS -o /dev/null -w "%{http_code}" "${URL}" || echo "000")
+            echo -e "${BLUE} Attempt ${attempt}/${MAX_ATTEMPTS} => HTTP ${HTTP_CODE}"
+
+            if [[ "${HTTP_CODE}" =~ ^2[0-9][0-9]$|^3[0-9][0-9]$|^401$|^403$|^404$ ]]; then
+              echo -e "${GREEN} ✅ Endpoint responded (HTTP ${HTTP_CODE})"
+              break
+            fi
+
+            if [ "${attempt}" -eq "${MAX_ATTEMPTS}" ]; then
+              echo -e "${RED} ❌ Endpoint did not become reachable in time"
+              exit 1
+            fi
+
+            sleep "${INTERVAL}"
+          done
+
+      # NOTE:
+      # We intentionally avoid azure/container-apps-deploy-action here because it can overwrite
+      # the Container App template (env vars, secrets, ingress) managed by Terraform, which may
+      # leave the app stuck in 'Activating'. This step updates only the container image.
+
+      - name: 📊 Container App Details
+        id: aca-details
+        run: |
+          FQDN=$(az containerapp show \
+            --name "${{ steps.naming.outputs.AZURE_ACA_NAME }}" \
+            --resource-group "${{ steps.naming.outputs.AZURE_RG_NAME }}" \
+            --query "properties.configuration.ingress.fqdn" \
+            --output tsv)
+
+          STATE=$(az containerapp show \
+            --name "${{ steps.naming.outputs.AZURE_ACA_NAME }}" \
+            --resource-group "${{ steps.naming.outputs.AZURE_RG_NAME }}" \
+            --query "properties.runningStatus" \
+            --output tsv)
+
+          echo "FQDN=$FQDN" >> $GITHUB_OUTPUT
+          echo "STATE=$STATE" >> $GITHUB_OUTPUT
+
+      - name: 📝 Write deployment summary
+        run: |
+          SUMMARY='
+          # 🚀 Deploy to Azure Container App
+
+          | Campo | Valor |
+          |-------|-------|
+          | Versão | ${{ inputs.tagVersion }} |
+          | Environment | ${{ inputs.environment }} |
+          | Container App | ${{ steps.naming.outputs.AZURE_ACA_NAME }} |
+          | Container App Environment | ${{ steps.naming.outputs.AZURE_ACAE_NAME }} |
+          | Resource Group | ${{ steps.naming.outputs.AZURE_RG_NAME }} |
+          | FQDN | ${{ steps.aca-details.outputs.FQDN }} |
+          | Estado | ${{ steps.aca-details.outputs.STATE }} |
+          | URL da API | https://${{ steps.aca-details.outputs.FQDN }} |
+
+          ## 🔗 Links Úteis
+          - **Swagger UI**: https://${{ steps.aca-details.outputs.FQDN }}/docs
+          - **ReDoc**: https://${{ steps.aca-details.outputs.FQDN }}/redoc
+          - **Health Check**: https://${{ steps.aca-details.outputs.FQDN }}${{ inputs.healthCheckPath }}
+
+          ## ✅ Deploy Status
+          - ✅ Imagem Docker atualizada no Azure Container App
+          - ✅ Deploy realizado com sucesso
+          - ✅ Aplicação disponível na URL acima'
+          echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY

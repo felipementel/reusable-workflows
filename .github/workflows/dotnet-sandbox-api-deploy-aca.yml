@@ -1,8 +1,6 @@
 ﻿name: Deploy to Azure Container Apps ☁️
 run-name: "${{ github.actor }} - ${{ github.run_id }}"
 
-#Secrets on Caller: AZURE_CREDENTIALS
-#VARS on Caller: AZURE_RG, AZURE_ACAE_BASE
 on:
   workflow_call:
     inputs:
@@ -19,6 +17,16 @@ on:
         type: string
         description: 'Image name used in GHCR (e.g. usuariosapi)'
         required: true
+      registry:
+        type: string
+        description: 'Container registry URL (e.g. ghcr.io, docker.io, myacr.azurecr.io)'
+        required: false
+        default: 'ghcr.io'
+      registryUsername:
+        type: string
+        description: 'Registry username. Defaults to github.actor when empty (suitable for ghcr.io)'
+        required: false
+        default: ''
       msgCanalDeploy:
         type: string
         description: 'Message to display in the deployment summary'
@@ -79,7 +87,7 @@ jobs:
           azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
           aca-name: ${{ steps.naming.outputs.AZURE_ACA_NAME }}
           rg-name: ${{ steps.naming.outputs.AZURE_RG_NAME }}
-          image: ghcr.io/${{ github.actor }}/deploy.${{ inputs.imageName }}:${{ inputs.tagVersion }}
+          image: ${{ inputs.registry }}/${{ inputs.registryUsername || github.actor }}/deploy.${{ inputs.imageName }}:${{ inputs.tagVersion }}
           health-check-path: ${{ inputs.healthCheckPath }}
           poll-max-attempts: ${{ inputs.deployPollMaxAttempts }}
           poll-interval-seconds: ${{ inputs.deployPollIntervalSeconds }}

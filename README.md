@@ -71,13 +71,128 @@
 
 | Workflow | Descrição |
 |----------|-----------|
-| [`dotnet-sandbox-api.yml`](.github/workflows/dotnet-sandbox-api.yml) | Pipeline DevSecOps completa para APIs .NET (build, test, scan, push) |
+| [`dotnet-sandbox-api-build.yml`](.github/workflows/dotnet-sandbox-api-build.yml) | Pipeline DevSecOps para APIs .NET — build, testes, scans de segurança, push de imagem |
+| [`dotnet-sandbox-api-deploy-aca.yml`](.github/workflows/dotnet-sandbox-api-deploy-aca.yml) | Deploy de imagem para **Azure Container Apps** (.NET) |
 | [`dotnet-pr-check.yml`](.github/workflows/dotnet-pr-check.yml) | Validação de PRs para projetos .NET |
-| [`python-ci-cd-api.yml`](.github/workflows/python-ci-cd-api.yml) | CI/CD para APIs Python |
+| [`python-sandbox-api-build.yml`](.github/workflows/python-sandbox-api-build.yml) | Pipeline DevSecOps para APIs Python — build, testes, scans de segurança, push de imagem |
+| [`python-sandbox-api-deploy-aca.yml`](.github/workflows/python-sandbox-api-deploy-aca.yml) | Deploy de imagem para **Azure Container Apps** (Python) |
+| [`python-ci-cd-api.yml`](.github/workflows/python-ci-cd-api.yml) | CI/CD para APIs Python (legado — substituído pelos dois acima) |
 | [`python-pr-check.yml`](.github/workflows/python-pr-check.yml) | Validação de PRs para projetos Python |
-| [`react-ci-cd-web.yml`](.github/workflows/react-ci-cd-web.yml) | CI/CD para aplicações React |
+| [`react-sandbox-web-build.yml`](.github/workflows/react-sandbox-web-build.yml) | Pipeline DevSecOps para frontends React — build, scans de segurança, upload de artefato |
+| [`react-sandbox-web-deploy-swa.yml`](.github/workflows/react-sandbox-web-deploy-swa.yml) | Deploy de artefato para **Azure Static Web Apps** + OWASP ZAP DAST |
+| [`react-ci-cd-web.yml`](.github/workflows/react-ci-cd-web.yml) | CI/CD para aplicações React (legado — substituído pelos dois acima) |
 | [`react-pr-check.yml`](.github/workflows/react-pr-check.yml) | Validação de PRs para projetos React |
 | [`sandbox-console.yml`](.github/workflows/sandbox-console.yml) | Pipeline para aplicações console |
+
+---
+
+## Configuração do Repositório Caller
+
+> **Pré-requisito:** Os **Environments** do GitHub (`DEV`, `HML`, `PRD` etc.) devem estar criados no repositório caller antes de executar qualquer pipeline de deploy. Acesse **Settings → Environments** e crie os ambientes correspondentes aos valores passados no input `environment`.
+
+### `dotnet-sandbox-api-build.yml`
+
+**Secrets** (Settings → Secrets and variables → Actions → Secrets):
+
+| Nome | Obrigatório | Descrição |
+|------|:-----------:|-----------|
+| `GITLEAKS_LICENSE` | ✅ | Licença do GitLeaks |
+| `SNYK_TOKEN` | ✅ | Token de autenticação do Snyk |
+| `SONAR_TOKEN` | ✅ | Token de autenticação do SonarCloud |
+| `SONAR_PROJECT_KEY` | ✅ | Chave do projeto no SonarCloud |
+| `SAFETY_API_KEY` | ✅ | API Key do Safety CLI |
+| `REGISTRY_PASSWORD` | ⬜ | Senha/token do registry. Omita para `ghcr.io` (usa `GITHUB_TOKEN` automaticamente) |
+
+**Variables** (Settings → Secrets and variables → Actions → Variables):
+
+| Nome | Obrigatório | Descrição |
+|------|:-----------:|-----------|
+| `SONAR_ORGANIZATION` | ✅ | Slug da organização no SonarCloud |
+
+### `dotnet-sandbox-api-deploy-aca.yml`
+
+**Secrets** (Settings → Secrets and variables → Actions → Secrets):
+
+| Nome | Obrigatório | Descrição |
+|------|:-----------:|-----------|
+| `AZURE_CREDENTIALS` | ✅ | JSON com as credenciais do Service Principal Azure (saída de `az ad sp create-for-rbac`) |
+
+**Variables** (Settings → Secrets and variables → Actions → Variables):
+
+| Nome | Obrigatório | Descrição |
+|------|:-----------:|-----------|
+| `AZURE_RG` | ✅ | Base do nome do Resource Group (ex: `rg-myorg`) |
+| `AZURE_ACAE_BASE` | ✅ | Base do nome do Container App Environment (ex: `cae-myorg`) |
+
+### `python-sandbox-api-build.yml`
+
+**Secrets** (Settings → Secrets and variables → Actions → Secrets):
+
+| Nome | Obrigatório | Descrição |
+|------|:-----------:|-----------|
+| `GITLEAKS_LICENSE` | ✅ | Licença do GitLeaks |
+| `GH_PACKAGES_TOKEN` | ✅ | Token do GitHub Packages para push de imagem |
+| `CODECOV_TOKEN` | ⬜ | Token do Codecov para upload de cobertura |
+| `BADGE_GIST_TOKEN` | ⬜ | Token do Gist para atualização do badge de CI/CD |
+| `REGISTRY_PASSWORD` | ⬜ | Senha/token do registry. Omita para `ghcr.io` (usa `GH_PACKAGES_TOKEN` automaticamente) |
+
+### `python-sandbox-api-deploy-aca.yml`
+
+**Secrets** (Settings → Secrets and variables → Actions → Secrets):
+
+| Nome | Obrigatório | Descrição |
+|------|:-----------:|-----------|
+| `AZURE_CREDENTIALS` | ✅ | JSON com as credenciais do Service Principal Azure (saída de `az ad sp create-for-rbac`) |
+
+**Variables** (Settings → Secrets and variables → Actions → Variables):
+
+| Nome | Obrigatório | Descrição |
+|------|:-----------:|-----------|
+| `AZURE_RG` | ✅ | Base do nome do Resource Group (ex: `rg-myorg`) |
+| `AZURE_ACAE_BASE` | ✅ | Base do nome do Container App Environment (ex: `cae-myorg`) |
+
+---
+
+### `react-sandbox-web-build.yml`
+
+**Secrets** (Settings → Secrets and variables → Actions → Secrets):
+
+| Nome | Obrigatório | Descrição |
+|------|:-----------:|-----------|
+| `GITLEAKS_LICENSE` | ✅ | Licença do GitLeaks |
+| `BADGE_GIST_TOKEN` | ⬜ | Token do Gist para atualização do badge CI/CD (somente em `main`) |
+| `APPLICATIONINSIGHTS_CONNECTION_STRING` | ⬜ | Connection string do Application Insights (injetada no `.env`) |
+| `VITE_AUTH_API_KEY` | ⬜ | Chave de API de autenticação (usada em repositórios específicos) |
+
+**Variables** (Settings → Secrets and variables → Actions → Variables):
+
+| Nome | Obrigatório | Descrição |
+|------|:-----------:|-----------|
+| `BADGE_GIST_ID` | ⬜ | ID do Gist para o badge CI/CD |
+| `VITE_*` | ⬜ | Variáveis de ambiente do Vite (dependem do repositório e do environment) |
+
+---
+
+### `react-sandbox-web-deploy-swa.yml`
+
+> **Pré-requisito:** O **Environment** GitHub (`DEV`, `HML`, `PRD` etc.) deve estar criado no repositório caller. As variáveis `AZURE_STATIC_WEBAPP_NAME` e `AZURE_RESOURCE_GROUP` devem ser definidas **dentro do Environment** correspondente.
+
+**Secrets** (Settings → Secrets and variables → Actions → Secrets):
+
+| Nome | Obrigatório | Descrição |
+|------|:-----------:|-----------|
+| `AZURE_CREDENTIALS` | ✅ | JSON com as credenciais do Service Principal Azure (saída de `az ad sp create-for-rbac`) |
+| `AZURE_STATIC_WEB_APPS_API_TOKEN` | ✅ | Token de deploy do Azure Static Web Apps |
+| `BADGE_GIST_TOKEN` | ⬜ | Token do Gist para atualização do badge CI/CD |
+
+**Variables** (Settings → Secrets and variables → Actions → Variables):
+
+| Nome | Obrigatório | Descrição |
+|------|:-----------:|-----------|
+| `AZURE_STATIC_WEBAPP_NAME` | ✅* | Nome do recurso Azure Static Web App (necessário se `dist/config.json` tiver placeholders) |
+| `AZURE_RESOURCE_GROUP` | ✅* | Nome do Resource Group do Azure Static Web App (necessário se `dist/config.json` tiver placeholders) |
+
+> \* Obrigatório somente quando o arquivo `dist/config.json` do build contiver placeholders `{{ }}` que precisam ser preenchidos via app settings do Azure.
 
 ---
 

@@ -1,8 +1,16 @@
 name: DevSecOps Dispatch ⚡
 run-name: "${{ github.actor }} - ${{ github.run_id }}"
 
-#Secrets on Caller: GITLEAKS_LICENSE, SNYK_TOKEN, SONAR_TOKEN, SONAR_PROJECT_KEY
-#VARS on Caller: SONAR_ORGANIZATION
+# SECRETS on Caller:
+  # - GITLEAKS_LICENSE
+  # - SNYK_TOKEN
+  # - SONAR_TOKEN
+  # - SONAR_PROJECT_KEY
+  # - SAFETY_API_KEY
+  # - REGISTRY_PASSWORD (if using private registry)
+# VARS on Caller:
+  # - SONAR_ORGANIZATION
+
 on:
   workflow_call:
     inputs:
@@ -84,6 +92,17 @@ on:
         description: 'Whether to set up Docker for the Snyk container scan'
         required: false
         default: false
+      #registry
+      registry:
+        type: string
+        description: 'Container registry URL (e.g. ghcr.io, docker.io, myacr.azurecr.io)'
+        required: false
+        default: 'ghcr.io'
+      registryUsername:
+        type: string
+        description: 'Registry username. Defaults to github.actor when empty (suitable for ghcr.io)'
+        required: false
+        default: ''
     secrets:
       SONAR_PROJECT_KEY:
         required: true
@@ -223,8 +242,8 @@ jobs:
       - name: 🐳 Docker Build (local, for Security scan)
         uses: felipementel/reusable-workflows/.github/actions/tools/docker/buildx@main
         with:
-          registry: ghcr.io
-          registry-username: ${{ github.actor }}
+          registry: ${{ inputs.registry }}
+          registry-username: ${{ inputs.registryUsername || github.actor }}
           image-name: deploy.${{ inputs.imageName }}
           tag-version: ${{ steps.get-version.outputs.TAG }}
           dockerfile: ${{ inputs.dockerFileFullPath }}
@@ -239,7 +258,7 @@ jobs:
           projectBaseDir: ${{ inputs.projectBaseDir }}
           mainProject: ${{ inputs.mainProject }}
           solutionFileName: ${{ inputs.solutionFileName }}
-          imageName: ghcr.io/${{ github.actor }}/deploy.${{ inputs.imageName }}:${{ steps.get-version.outputs.TAG }}
+          imageName: ${{ inputs.registry }}/${{ inputs.registryUsername || github.actor }}/deploy.${{ inputs.imageName }}:${{ steps.get-version.outputs.TAG }}
           docker-file-full-path: ${{ inputs.dockerFileFullPath }}
           docker-build-context: ${{ inputs.dockerBuildContext }}
 
@@ -280,7 +299,7 @@ jobs:
       - name: 🔎 Trivy - Image Scan (vuln, secret)
         uses: felipementel/reusable-workflows/.github/actions/tools/security/trivy-scan@main
         with:
-          image-ref: ghcr.io/${{ github.actor }}/deploy.${{ inputs.imageName }}:${{ steps.get-version.outputs.TAG }}
+          image-ref: ${{ inputs.registry }}/${{ inputs.registryUsername || github.actor }}/deploy.${{ inputs.imageName }}:${{ steps.get-version.outputs.TAG }}
           scan-type: 'image'
           format: 'sarif'
           output-file: 'trivy-image-results.sarif'
@@ -329,9 +348,9 @@ jobs:
         id: check-image
         uses: felipementel/reusable-workflows/.github/actions/tools/docker/check-image@main
         with:
-          registry: ghcr.io
-          registry-username: ${{ github.actor }}
-          registry-password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ${{ inputs.registry }}
+          registry-username: ${{ inputs.registryUsername || github.actor }}
+          registry-password: ${{ secrets.REGISTRY_PASSWORD || secrets.GITHUB_TOKEN }}
           image-name: deploy.${{ inputs.imageName }}
           tag-version: ${{ needs.build.outputs.tag-version }}
 
@@ -358,9 +377,9 @@ jobs:
       - name: 🐳 Docker Build and Push
         uses: felipementel/reusable-workflows/.github/actions/tools/docker/push@main
         with:
-          registry: ghcr.io
-          registry-username: ${{ github.actor }}
-          registry-password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ${{ inputs.registry }}
+          registry-username: ${{ inputs.registryUsername || github.actor }}
+          registry-password: ${{ secrets.REGISTRY_PASSWORD || secrets.GITHUB_TOKEN }}
           image-name: deploy.${{ inputs.imageName }}
           tag-version: ${{ needs.build.outputs.tag-version }}
           dockerfile: ${{ inputs.dockerFileFullPath }}
