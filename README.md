@@ -11,7 +11,6 @@
 | SonarCloud | https://sonarcloud.statuspage.io/ |
 | Trivy (Aqua Security) | https://status.aquasec.com/ |
 | Docker Hub | https://www.dockerstatus.com/ |
-| GitHub Packages (GHCR) | https://www.githubstatus.com/ |
 
 ---
 
