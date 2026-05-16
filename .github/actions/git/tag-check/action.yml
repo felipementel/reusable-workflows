@@ -35,7 +35,7 @@ runs:
         TAG="v${{ inputs.tag }}"
         if git ls-remote --tags origin "refs/tags/${TAG}" | grep -q "${TAG}"; then
           echo -e "❌ ${RED}A tag ${TAG} já existe no repositório remoto!${RESET}"
-          echo -e "${RED}Atualize a versão no ${{ inputs.version_file }} antes de abrir o PR.${RESET}"
+          echo -e "${RED}Atualize a versão no ${{ inputs.version_file }}.${RESET}"
           echo "## ❌ Tag já existe" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "A tag \`${TAG}\` já existe. Atualize a versão no \`${{ inputs.version_file }}\`." >> $GITHUB_STEP_SUMMARY
