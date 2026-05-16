@@ -76,7 +76,7 @@ runs:
         sarif_file: snykDotNet.sarif
 
     - name: 🍵📤 Upload Snyk Container test
-      uses: felipementel/gh-actions/.github/actions/_wrapper/github/upload-artifact
+      uses: felipementel/gh-actions/.github/actions/_wrapper/github/upload-artifact@main
       with:
         name: Snyk-Container-Test
         path: |

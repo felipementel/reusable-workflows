@@ -54,7 +54,7 @@ jobs:
       image-exists: ${{ steps.check-image-and-tag.outputs.IMAGE_EXISTS }}
     steps:
       - name: Log in to the Container registry
-        uses: felipementel/reusable-workflows/.github/actions/_wrapper/docker/login-action@main
+        uses: felipementel/gh-actions/.github/actions/_wrapper/docker/login-action@main
         with:
           registry: ghcr.io
           username: ${{ github.actor }}

@@ -154,7 +154,7 @@ runs:
 
     - name: 📦 Upload scan results as artifact
       if: ${{ always() && inputs.format == 'sarif' }}
-      uses: felipementel/gh-actions/.github/actions/_wrapper/github/upload-artifact
+      uses: felipementel/gh-actions/.github/actions/_wrapper/github/upload-artifact@main
       continue-on-error: true
       with:
         name: ${{ inputs.category }}-results

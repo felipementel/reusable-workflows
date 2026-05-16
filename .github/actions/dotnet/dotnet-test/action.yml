@@ -72,7 +72,7 @@ runs:
 
     - name: 🧪📤 Upload coverage report artifact
       if: ${{ steps.check-tests.outputs.HAS_TESTS == 'true' }}
-      uses: felipementel/gh-actions/.github/actions/_wrapper/github/upload-artifact
+      uses: felipementel/gh-actions/.github/actions/_wrapper/github/upload-artifact@main
       with:
         name: Coverage-Report
         path: coveragereport

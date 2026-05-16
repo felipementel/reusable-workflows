@@ -153,7 +153,7 @@ jobs:
           echo "NOW=$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_OUTPUT
 
       - name: 📥 Checkout
-        uses: felipementel/reusable-workflows/.github/actions/_wrapper/github/checkout@main
+        uses: felipementel/gh-actions/.github/actions/_wrapper/github/checkout@main
         with:
           ref: ${{ github.ref }}
           fetch-depth: 0
@@ -178,7 +178,7 @@ jobs:
           fail_on_exists: true
 
       - name: 🛠️ Setup .NET version ${{ inputs.dotnetVersion }}
-        uses: felipementel/reusable-workflows/.github/actions/_wrapper/github/setup-dotnet@main
+        uses: felipementel/gh-actions/.github/actions/_wrapper/github/setup-dotnet@main
         with:
           dotnet-version: ${{ inputs.dotnetVersion }}
 
@@ -365,7 +365,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: felipementel/reusable-workflows/.github/actions/_wrapper/github/checkout@main
+        uses: felipementel/gh-actions/.github/actions/_wrapper/github/checkout@main
         with:
           fetch-depth: 0
           sparse-checkout: |

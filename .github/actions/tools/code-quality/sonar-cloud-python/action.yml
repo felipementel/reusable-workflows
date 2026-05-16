@@ -36,7 +36,7 @@ runs:
   steps:
     - name: 📸 SonarCloud Analysis (Test ✅, Sonar ✅)
       if: ${{ inputs.has-tests == 'true' }}
-      uses: felipementel/gh-actions/.github/actions/_wrapper/sonar/sonarcloud-github-action
+      uses: felipementel/gh-actions/.github/actions/_wrapper/sonar/sonarcloud-github-action@main
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
         SONAR_TOKEN: ${{ inputs.sonar-token }}
@@ -50,7 +50,7 @@ runs:
 
     - name: 📸 SonarCloud Analysis (Test ⛔, Sonar ✅)
       if: ${{ inputs.has-tests != 'true' }}
-      uses: felipementel/gh-actions/.github/actions/_wrapper/sonar/sonarcloud-github-action
+      uses: felipementel/gh-actions/.github/actions/_wrapper/sonar/sonarcloud-github-action@main
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
         SONAR_TOKEN: ${{ inputs.sonar-token }}

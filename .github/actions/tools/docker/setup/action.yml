@@ -11,11 +11,11 @@ runs:
   using: 'composite'
   steps:
     - name: 🐳 Set up QEMU
-      uses: felipementel/gh-actions/.github/actions/_wrapper/docker/setup-qemu-action
+      uses: felipementel/gh-actions/.github/actions/_wrapper/docker/setup-qemu-action@main
       with:
         platforms: ${{ inputs.platforms }}
 
     - name: 🐳 Set up Docker Buildx
-      uses: felipementel/gh-actions/.github/actions/_wrapper/docker/setup-buildx-action
+      uses: felipementel/gh-actions/.github/actions/_wrapper/docker/setup-buildx-action@main
       with:
         version: latest

@@ -41,14 +41,14 @@ runs:
 
     - name: 🐳 Extract metadata (tags, labels) for Docker
       id: meta
-      uses: felipementel/gh-actions/.github/actions/_wrapper/docker/metadata-action
+      uses: felipementel/gh-actions/.github/actions/_wrapper/docker/metadata-action@main
       with:
         images: |
           ${{ inputs.registry }}/${{ inputs.registry-username }}/${{ inputs.image-name }}
 
     - name: 🐳 Build and push
       if: inputs.output-tar == ''
-      uses: felipementel/gh-actions/.github/actions/_wrapper/docker/build-push-action
+      uses: felipementel/gh-actions/.github/actions/_wrapper/docker/build-push-action@main
       with:
         context: ${{ inputs.context }}
         file: ${{ inputs.dockerfile }}
