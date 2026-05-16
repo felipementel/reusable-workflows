@@ -25,6 +25,7 @@
 | [`tools/security/giteaks`](.github/actions/tools/security/giteaks) | Detecção de secrets no repositório com **GitLeaks** |
 | [`tools/security/safety-python`](.github/actions/tools/security/safety-python) | Verificação de vulnerabilidades em dependências Python com **Safety CLI** |
 | [`tools/security/owasp-zap`](.github/actions/tools/security/owasp-zap) | Baseline scan com **OWASP ZAP** |
+| [`tools/security/checkov`](.github/actions/tools/security/checkov) | Scan de políticas e compliance em IaC Terraform com **Checkov** |
 
 ### Code Quality
 
