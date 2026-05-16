@@ -112,7 +112,6 @@ runs:
         severity: ${{ inputs.severity }}
         ignore-unfixed: ${{ inputs.ignore-unfixed }}
         trivyignores: ${{ inputs.trivyignores }}
-        dependency-tree: true
         exit-code: '1'
 
     - name: 🔍 Scan with Trivy (license) - SARIF report
@@ -141,7 +140,6 @@ runs:
         severity: ${{ inputs.severity }}
         ignore-unfixed: ${{ inputs.ignore-unfixed }}
         trivyignores: ${{ inputs.trivyignores }}
-        dependency-tree: true
         exit-code: '1'
 
     - name: 📤 Upload Trivy scan results to GitHub Security
