@@ -21,6 +21,8 @@ updates:
       - "dependabot"
     commit-message:
       prefix: "[github actions] "
+    ignore:
+      - dependency-name: "felipementel/gh-actions"
 
   - package-ecosystem: "github-actions"
     directories:
