@@ -182,7 +182,7 @@ jobs:
           EOF
 
       - name: Upload OpenAPI spec artifact
-        uses: actions/upload-artifact@v7
+        uses: ./.github/actions/_wrapper/github/upload-artifact
         with:
           name: openapi-${{ github.run_number }}.json
           path: |
@@ -292,7 +292,7 @@ jobs:
 
       - name: Archive coverage HTML report
         if: ${{ steps.check-tests.outputs.HAS_TESTS == 'true' }}
-        uses: actions/upload-artifact@v7
+        uses: ./.github/actions/_wrapper/github/upload-artifact
         with:
           name: coverage-report-unit
           path: tests/results/htmlcov/
@@ -344,7 +344,7 @@ jobs:
 
       - name: 🔐 Log in to GHCR for image validation
         if: ${{ inputs.image_name != '' }}
-        uses: docker/login-action@v4
+        uses: ./.github/actions/_wrapper/docker/login-action
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -495,7 +495,7 @@ jobs:
       #     pip-audit
 
       - name: Upload security reports
-        uses: actions/upload-artifact@v7
+        uses: ./.github/actions/_wrapper/github/upload-artifact
         with:
           name: security-reports
           path: |

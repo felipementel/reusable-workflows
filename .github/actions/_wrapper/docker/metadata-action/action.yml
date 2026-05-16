@@ -1,0 +1,90 @@
+name: 'Docker Metadata Action (Wrapper)'
+description: 'Wrapper composite action for docker/metadata-action. Update the version only here.'
+
+inputs:
+  context:
+    description: 'Where to get context data. Can be workflow (default) or git'
+    required: true
+    default: 'workflow'
+  images:
+    description: 'List of Docker images to use as base name for tags'
+    required: false
+  tags:
+    description: 'List of tags as key-value pair attributes'
+    required: false
+  flavor:
+    description: 'Flavors to apply'
+    required: false
+  labels:
+    description: 'List of custom labels'
+    required: false
+  annotations:
+    description: 'List of annotations'
+    required: false
+  sep-tags:
+    description: 'Separator to use for tags output'
+    required: false
+  sep-labels:
+    description: 'Separator to use for labels output'
+    required: false
+  sep-annotations:
+    description: 'Separator to use for annotations output'
+    required: false
+  bake-target:
+    description: 'Bake target name (default docker-metadata-action)'
+    required: false
+  github-token:
+    description: 'GitHub Token as provided by secrets'
+    required: true
+    default: ${{ github.token }}
+
+outputs:
+  version:
+    description: 'Generated Docker image version'
+    value: ${{ steps.meta.outputs.version }}
+  tags:
+    description: 'Generated Docker tags'
+    value: ${{ steps.meta.outputs.tags }}
+  tag-names:
+    description: 'Generated Docker tag names without registry'
+    value: ${{ steps.meta.outputs.tag-names }}
+  labels:
+    description: 'Generated Docker labels'
+    value: ${{ steps.meta.outputs.labels }}
+  annotations:
+    description: 'Generated Docker annotations'
+    value: ${{ steps.meta.outputs.annotations }}
+  json:
+    description: 'JSON output of tags and labels'
+    value: ${{ steps.meta.outputs.json }}
+  bake-file-tags:
+    description: 'Bake definition file with tags'
+    value: ${{ steps.meta.outputs.bake-file-tags }}
+  bake-file-labels:
+    description: 'Bake definition file with labels'
+    value: ${{ steps.meta.outputs.bake-file-labels }}
+  bake-file-annotations:
+    description: 'Bake definition file with annotations'
+    value: ${{ steps.meta.outputs.bake-file-annotations }}
+  bake-file:
+    description: 'Bake definition file with tags and labels'
+    value: ${{ steps.meta.outputs.bake-file }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 🐳 Extract metadata (tags, labels) for Docker
+      id: meta
+      uses: docker/metadata-action@v6
+      with:
+        context: ${{ inputs.context }}
+        images: ${{ inputs.images }}
+        tags: ${{ inputs.tags }}
+        flavor: ${{ inputs.flavor }}
+        labels: ${{ inputs.labels }}
+        annotations: ${{ inputs.annotations }}
+        sep-tags: ${{ inputs.sep-tags }}
+        sep-labels: ${{ inputs.sep-labels }}
+        sep-annotations: ${{ inputs.sep-annotations }}
+        bake-target: ${{ inputs.bake-target }}
+        github-token: ${{ inputs.github-token }}

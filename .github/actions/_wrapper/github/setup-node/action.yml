@@ -1,0 +1,65 @@
+name: 'Setup Node.js (Wrapper)'
+description: 'Wrapper composite action for actions/setup-node'
+
+inputs:
+  node-version:
+    description: 'Version spec of the Node.js version to use (e.g. 20.x, 22.x)'
+    required: false
+    default: ''
+  node-version-file:
+    description: 'File containing the version spec (package.json, .nvmrc, .node-version)'
+    required: false
+    default: ''
+  architecture:
+    description: 'Target architecture for Node to use (e.g. x86, x64)'
+    required: false
+    default: ''
+  check-latest:
+    description: 'Check for the latest available version that satisfies the version spec'
+    required: false
+    default: 'false'
+  registry-url:
+    description: 'Optional registry to set up for auth'
+    required: false
+    default: ''
+  scope:
+    description: 'Optional scope for authenticating against scoped registries'
+    required: false
+    default: ''
+  cache:
+    description: 'Package manager for caching in the default directory (npm, yarn or pnpm)'
+    required: false
+    default: ''
+  cache-dependency-path:
+    description: 'Path to a dependency file (package-lock.json, yarn.lock, etc.)'
+    required: false
+    default: ''
+  token:
+    description: 'Token used to pull node distributions from node-versions'
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  cache-hit:
+    description: 'A boolean value to indicate if a cache was hit'
+    value: ${{ steps.setup-node.outputs.cache-hit }}
+  node-version:
+    description: 'The installed Node.js version'
+    value: ${{ steps.setup-node.outputs.node-version }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 🟢 Setup Node.js
+      id: setup-node
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        node-version-file: ${{ inputs.node-version-file }}
+        architecture: ${{ inputs.architecture }}
+        check-latest: ${{ inputs.check-latest }}
+        registry-url: ${{ inputs.registry-url }}
+        scope: ${{ inputs.scope }}
+        cache: ${{ inputs.cache }}
+        cache-dependency-path: ${{ inputs.cache-dependency-path }}
+        token: ${{ inputs.token }}

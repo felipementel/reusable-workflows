@@ -212,13 +212,13 @@ jobs:
 
       - name: 🔐 Set up JDK 23 to use with SonarCloud
         if: ${{ inputs.sonar-qube }}
-        uses: actions/setup-java@v4
+        uses: ./.github/actions/_wrapper/github/setup-java
         with:
           java-version: 23
           distribution: 'zulu'
 
       - name: 🔐 SonarCloud packages cache
-        uses: actions/cache@v4
+        uses: ./.github/actions/_wrapper/github/cache
         if: ${{ inputs.sonar-qube }}
         with:
           path: ~/sonar/cache
@@ -228,7 +228,7 @@ jobs:
       - name: 🔐 SonarCloud scanner cache
         id: cache-sonar-scanner
         if: ${{ inputs.sonar-qube }}
-        uses: actions/cache@v4
+        uses: ./.github/actions/_wrapper/github/cache
         with:
           path: ./.sonar/scanner
           key: ${{ runner.os }}-sonar-scanner
@@ -299,7 +299,7 @@ jobs:
 
       - name: Upload coverage report artifact
         if: ${{ inputs.unit-tests }}
-        uses: actions/upload-artifact@v4
+        uses: ./.github/actions/_wrapper/github/upload-artifact
         with:
           name: CoverageReport
           path: coveragereport

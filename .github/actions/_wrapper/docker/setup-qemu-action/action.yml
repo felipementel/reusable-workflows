@@ -1,0 +1,32 @@
+name: 'Docker Setup QEMU Action (Wrapper)'
+description: 'Wrapper composite action for docker/setup-qemu-action. Update the version only here.'
+
+inputs:
+  image:
+    description: 'QEMU static binaries Docker image'
+    required: false
+    default: 'docker.io/tonistiigi/binfmt:latest'
+  platforms:
+    description: 'Platforms to install'
+    required: false
+    default: 'all'
+  cache-image:
+    description: 'Cache QEMU image'
+    required: false
+    default: 'true'
+
+outputs:
+  platforms:
+    description: 'Available platforms'
+    value: ${{ steps.qemu.outputs.platforms }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 🐳 Set up QEMU
+      id: qemu
+      uses: docker/setup-qemu-action@v4
+      with:
+        image: ${{ inputs.image }}
+        platforms: ${{ inputs.platforms }}
+        cache-image: ${{ inputs.cache-image }}

@@ -1,0 +1,124 @@
+name: 'Docker Build Push Action (Wrapper)'
+description: 'Wrapper composite action for docker/build-push-action. Update the version only here.'
+
+inputs:
+  context:
+    description: 'Build context'
+    required: false
+  file:
+    description: 'Path to the Dockerfile'
+    required: false
+  push:
+    description: 'Push is a shorthand for --output=type=registry'
+    required: false
+    default: 'false'
+  load:
+    description: 'Load is a shorthand for --output=type=docker'
+    required: false
+    default: 'false'
+  tags:
+    description: 'List of tags'
+    required: false
+  labels:
+    description: 'List of metadata for an image'
+    required: false
+  annotations:
+    description: 'List of annotation to set to the image'
+    required: false
+  platforms:
+    description: 'List of target platforms for build'
+    required: false
+  build-args:
+    description: 'List of build-time variables'
+    required: false
+  build-contexts:
+    description: 'List of additional build contexts'
+    required: false
+  builder:
+    description: 'Builder instance'
+    required: false
+  cache-from:
+    description: 'List of external cache sources'
+    required: false
+  cache-to:
+    description: 'List of cache export destinations'
+    required: false
+  secrets:
+    description: 'List of secrets to expose to the build'
+    required: false
+  secret-envs:
+    description: 'List of secret env vars to expose to the build'
+    required: false
+  secret-files:
+    description: 'List of secret files to expose to the build'
+    required: false
+  no-cache:
+    description: 'Do not use cache when building the image'
+    required: false
+    default: 'false'
+  pull:
+    description: 'Always attempt to pull all referenced images'
+    required: false
+    default: 'false'
+  target:
+    description: 'Sets the target stage to build'
+    required: false
+  outputs:
+    description: 'List of output destinations'
+    required: false
+  provenance:
+    description: 'Generate provenance attestation for the build'
+    required: false
+  sbom:
+    description: 'Generate SBOM attestation for the build'
+    required: false
+  ssh:
+    description: 'List of SSH agent socket or keys to expose to the build'
+    required: false
+  github-token:
+    description: 'GitHub Token for authentication'
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  imageid:
+    description: 'Image ID'
+    value: ${{ steps.build-push.outputs.imageid }}
+  digest:
+    description: 'Image content-addressable identifier also called a digest'
+    value: ${{ steps.build-push.outputs.digest }}
+  metadata:
+    description: 'Build result metadata'
+    value: ${{ steps.build-push.outputs.metadata }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 🐳 Build and push Docker image
+      id: build-push
+      uses: docker/build-push-action@v7
+      with:
+        context: ${{ inputs.context }}
+        file: ${{ inputs.file }}
+        push: ${{ inputs.push }}
+        load: ${{ inputs.load }}
+        tags: ${{ inputs.tags }}
+        labels: ${{ inputs.labels }}
+        annotations: ${{ inputs.annotations }}
+        platforms: ${{ inputs.platforms }}
+        build-args: ${{ inputs.build-args }}
+        build-contexts: ${{ inputs.build-contexts }}
+        builder: ${{ inputs.builder }}
+        cache-from: ${{ inputs.cache-from }}
+        cache-to: ${{ inputs.cache-to }}
+        secrets: ${{ inputs.secrets }}
+        secret-envs: ${{ inputs.secret-envs }}
+        secret-files: ${{ inputs.secret-files }}
+        no-cache: ${{ inputs.no-cache }}
+        pull: ${{ inputs.pull }}
+        target: ${{ inputs.target }}
+        outputs: ${{ inputs.outputs }}
+        provenance: ${{ inputs.provenance }}
+        sbom: ${{ inputs.sbom }}
+        ssh: ${{ inputs.ssh }}
+        github-token: ${{ inputs.github-token }}

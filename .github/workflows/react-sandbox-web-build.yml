@@ -147,7 +147,7 @@ jobs:
           working_directory: ${{ inputs.workingDirectory }}
 
       - name: Setup Node ${{ inputs.nodeVersion }} (with npm cache)
-        uses: actions/setup-node@v6
+        uses: ./.github/actions/_wrapper/github/setup-node
         with:
           node-version: ${{ inputs.nodeVersion }}
           cache: 'npm'
@@ -316,7 +316,7 @@ jobs:
           working-directory: ${{ inputs.workingDirectory }}
 
       - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v7
+        uses: ./.github/actions/_wrapper/github/upload-artifact
         with:
           name: static-website
           path: ${{ inputs.workingDirectory }}/dist
@@ -365,7 +365,7 @@ jobs:
           sparse-checkout-cone-mode: false
 
       - name: Setup Node ${{ inputs.nodeVersion }}
-        uses: actions/setup-node@v6
+        uses: ./.github/actions/_wrapper/github/setup-node
         with:
           node-version: ${{ inputs.nodeVersion }}
 

@@ -1,0 +1,70 @@
+name: 'Setup Java JDK (Wrapper)'
+description: 'Wrapper composite action for actions/setup-java'
+
+inputs:
+  java-version:
+    description: 'The Java version to set up (whole or semver)'
+    required: false
+    default: ''
+  java-version-file:
+    description: 'The path to the .java-version file'
+    required: false
+    default: ''
+  distribution:
+    description: 'Java distribution (e.g. zulu, temurin, microsoft)'
+    required: true
+  java-package:
+    description: 'The package type (jdk, jre, jdk+fx, jre+fx)'
+    required: false
+    default: 'jdk'
+  architecture:
+    description: "The architecture of the package (defaults to the runner's architecture)"
+    required: false
+    default: ''
+  check-latest:
+    description: 'Check for the latest available version that satisfies the version spec'
+    required: false
+    default: 'false'
+  cache:
+    description: 'Name of the build platform to cache dependencies (maven, gradle or sbt)'
+    required: false
+    default: ''
+  cache-dependency-path:
+    description: 'Path to a dependency file (pom.xml, build.gradle, etc.)'
+    required: false
+    default: ''
+  token:
+    description: 'Token used to authenticate when fetching version manifests'
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  distribution:
+    description: 'Distribution of Java that has been installed'
+    value: ${{ steps.setup-java.outputs.distribution }}
+  version:
+    description: 'Actual version of the Java environment that has been installed'
+    value: ${{ steps.setup-java.outputs.version }}
+  path:
+    description: 'Path to where the Java environment has been installed (same as $JAVA_HOME)'
+    value: ${{ steps.setup-java.outputs.path }}
+  cache-hit:
+    description: 'A boolean value to indicate an exact match was found for the primary key'
+    value: ${{ steps.setup-java.outputs.cache-hit }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: ☕ Setup Java JDK
+      id: setup-java
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ inputs.java-version }}
+        java-version-file: ${{ inputs.java-version-file }}
+        distribution: ${{ inputs.distribution }}
+        java-package: ${{ inputs.java-package }}
+        architecture: ${{ inputs.architecture }}
+        check-latest: ${{ inputs.check-latest }}
+        cache: ${{ inputs.cache }}
+        cache-dependency-path: ${{ inputs.cache-dependency-path }}
+        token: ${{ inputs.token }}

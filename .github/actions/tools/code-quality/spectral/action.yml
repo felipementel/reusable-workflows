@@ -14,7 +14,7 @@ runs:
   using: 'composite'
   steps:
     - name: 🎗️ Setup Node.js ${{ inputs.node-version }}
-      uses: actions/setup-node@v4
+      uses: ./.github/actions/_wrapper/github/setup-node
       with:
         node-version: ${{ inputs.node-version }}
 
@@ -46,7 +46,7 @@ runs:
 
     - name: 🎗️ 📤 Upload Spectral Lint Results
       if: ${{ always() }}
-      uses: actions/upload-artifact@v4
+      uses: ./.github/actions/_wrapper/github/upload-artifact
       with:
         name: Spectral-Results
         path: spectral-*.html

@@ -289,7 +289,7 @@ jobs:
 
       - name: 🧪📤 Upload test coverage artifacts
         if: ${{ steps.check-tests.outputs.HAS_TESTS == 'true' }}
-        uses: actions/upload-artifact@v7
+        uses: ./.github/actions/_wrapper/github/upload-artifact
         with:
           name: coverage-reports-${{ github.run_number }}
           path: |
@@ -332,7 +332,7 @@ jobs:
       image-exists: ${{ steps.check-image-and-tag.outputs.IMAGE_EXISTS }}
     steps:
       - name: 🔐 Log in to GHCR
-        uses: docker/login-action@v4
+        uses: ./.github/actions/_wrapper/docker/login-action
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -368,16 +368,16 @@ jobs:
           fetch-depth: 0
 
       - name: 🏗️ Set up QEMU
-        uses: docker/setup-qemu-action@v4
+        uses: ./.github/actions/_wrapper/docker/setup-qemu-action
 
       - name: 🏗️ Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: ./.github/actions/_wrapper/docker/setup-buildx-action
         with:
           version: latest
           platforms: linux/amd64,linux/arm64
 
       - name: 🔐 Log in to GHCR
-        uses: docker/login-action@v4
+        uses: ./.github/actions/_wrapper/docker/login-action
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -385,14 +385,14 @@ jobs:
 
       - name: 🏷️ Extract metadata for Docker
         id: meta
-        uses: docker/metadata-action@v6
+        uses: ./.github/actions/_wrapper/docker/metadata-action
         with:
           images: |
             ${{ env.registry }}/${{ inputs.image_name }}
 
       - name: 🐳 Build Docker image (without push)
         id: build
-        uses: docker/build-push-action@v7
+        uses: ./.github/actions/_wrapper/docker/build-push-action
         with:
           context: .
           file: ${{ env.dockerfileFolder }}/Dockerfile
@@ -422,7 +422,7 @@ jobs:
           exit-code: '1'
 
       - name: 🚀 Push Docker image (after security scan passed)
-        uses: docker/build-push-action@v7
+        uses: ./.github/actions/_wrapper/docker/build-push-action
         with:
           context: .
           file: ${{ env.dockerfileFolder }}/Dockerfile

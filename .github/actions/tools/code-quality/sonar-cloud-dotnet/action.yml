@@ -44,13 +44,13 @@ runs:
   using: 'composite'
   steps:
     - name: 🛠️ Set up JDK ${{ inputs.java-distro }} ${{ inputs.java-version }}
-      uses: actions/setup-java@v4
+      uses: ./.github/actions/_wrapper/github/setup-java
       with:
         java-version: ${{ inputs.java-version }}
         distribution: ${{ inputs.java-distro }}
 
     - name: 🔐 SonarCloud packages cache
-      uses: actions/cache@v4
+      uses: ./.github/actions/_wrapper/github/cache
       with:
         path: ~/sonar/cache
         key: ${{ runner.os }}-sonar
@@ -58,7 +58,7 @@ runs:
 
     - name: 🔐 SonarCloud scanner cache
       id: cache-sonar-scanner
-      uses: actions/cache@v4
+      uses: ./.github/actions/_wrapper/github/cache
       with:
         path: ./.sonar/scanner
         key: ${{ runner.os }}-sonar-scanner
