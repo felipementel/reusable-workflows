@@ -299,7 +299,7 @@ jobs:
           trivyignores: ${{ steps.check-trivyignore.outputs.path }}
           category: 'trivy-image'
 
-      - name: � Build to generate OpenAPI JSON
+      - name: 🚀 Build to generate OpenAPI JSON
         if: ${{ inputs.openAPIFolder != '' }}
         shell: bash
         run: |
