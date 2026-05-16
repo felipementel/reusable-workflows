@@ -146,7 +146,7 @@ jobs:
 
       - name: 🏷️ Set Badge to Running
         if: ${{ github.ref == 'refs/heads/main' }}
-        uses: GreenNexus-Core/gh-actions/.github/actions/update-badge-gist@main
+        uses: felipementel/gh-actions/.github/actions/update-badge-gist@main
         with:
           gist_id: ${{ vars.BADGE_GIST_ID }}
           gist_token: ${{ secrets.BADGE_GIST_TOKEN }}
@@ -173,7 +173,7 @@ jobs:
 
       - name: 🧱📤 Git Leaks
         if: ${{ inputs.gitLeaks && !(github.event_name == 'pull_request' && github.actor == 'dependabot[bot]') }}
-        uses: GreenNexus-Core/gh-actions/.github/actions/git-leaks@main
+        uses: felipementel/gh-actions/.github/actions/git-leaks@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           gitleaks-license: ${{ secrets.GITLEAKS_LICENSE }}
@@ -183,7 +183,7 @@ jobs:
 
       # Trivy no source/repo SAST scan (vulnerabilities, secrets, misconfigurations)
       - name: 🔎 Trivy - Filesystem Scan (vuln, secret, misconfig)
-        uses: GreenNexus-Core/gh-actions/.github/actions/trivy-scan@main
+        uses: felipementel/gh-actions/.github/actions/trivy-scan@main
         with:
           scan-type: 'fs'
           scan-ref: '${{ env.working_directory }}'
@@ -195,7 +195,7 @@ jobs:
           trivyignores: ${{ steps.check-trivyignore.outputs.path }}
 
       - name: 🔎 Trivy - license scan
-        uses: GreenNexus-Core/gh-actions/.github/actions/trivy-scan@main
+        uses: felipementel/gh-actions/.github/actions/trivy-scan@main
         with:
           scan-type: 'fs'
           scan-ref: '${{ env.working_directory }}'
@@ -207,7 +207,7 @@ jobs:
           trivyignores: ${{ steps.check-trivyignore.outputs.path }}
 
       - name: 🏷️ Extract Application Version
-        uses: GreenNexus-Core/gh-actions/.github/actions/python-get-version@main
+        uses: felipementel/gh-actions/.github/actions/python-get-version@main
         id: get-version
         with:
           environment: ${{ inputs.environment }}
@@ -340,7 +340,7 @@ jobs:
           retention-days: 30
 
       - name: Code Quality
-        uses: GreenNexus-Core/gh-actions/.github/actions/python-code-quality@main
+        uses: felipementel/gh-actions/.github/actions/python-code-quality@main
         with:
           app_dir: ${{ inputs.appDir }}
 
@@ -474,7 +474,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: 🔍 Scan Docker image for vulnerabilities
-        uses: GreenNexus-Core/gh-actions/.github/actions/trivy-scan@main
+        uses: felipementel/gh-actions/.github/actions/trivy-scan@main
         with:
           image-ref: ${{ inputs.registry }}/${{ inputs.registryUsername || github.actor }}/${{ inputs.imageName }}:${{ needs.build.outputs.tag-version }}
           severity: 'CRITICAL,HIGH'
@@ -582,7 +582,7 @@ jobs:
           fi
 
       - name: 🏷️ Update Badge Gist
-        uses: GreenNexus-Core/gh-actions/.github/actions/update-badge-gist@main
+        uses: felipementel/gh-actions/.github/actions/update-badge-gist@main
         with:
           gist_id: ${{ vars.BADGE_GIST_ID }}
           gist_token: ${{ secrets.BADGE_GIST_TOKEN }}

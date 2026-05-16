@@ -106,7 +106,7 @@ jobs:
 
       - name: 🏷️ Set Badge to Running
         if: ${{ github.ref == 'refs/heads/main' }}
-        uses: GreenNexus-Core/gh-actions/.github/actions/update-badge-gist@main
+        uses: felipementel/gh-actions/.github/actions/update-badge-gist@main
         with:
           gist_id: ${{ vars.BADGE_GIST_ID }}
           gist_token: ${{ secrets.BADGE_GIST_TOKEN }}
@@ -115,7 +115,7 @@ jobs:
 
       - name: 🧱📤 Git Leaks
         if: ${{ !(github.event_name == 'pull_request' && github.actor == 'dependabot[bot]') }}
-        uses: GreenNexus-Core/gh-actions/.github/actions/git-leaks@main
+        uses: felipementel/gh-actions/.github/actions/git-leaks@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           gitleaks-license: ${{ secrets.GITLEAKS_LICENSE }}
@@ -125,7 +125,7 @@ jobs:
 
       # Trivy no source/repo SAST scan (vulnerabilities, secrets, misconfigurations)
       - name: 🔎 Trivy - filesystem scan (deps, misconfig, secrets)
-        uses: GreenNexus-Core/gh-actions/.github/actions/trivy-scan@main
+        uses: felipementel/gh-actions/.github/actions/trivy-scan@main
         with:
           scan-type: 'fs'
           scan-ref: '${{ env.working_directory }}/dist'
@@ -137,7 +137,7 @@ jobs:
           trivyignores: ${{ steps.check-trivyignore.outputs.path }}
 
       - name: 🔎 Trivy - license scan
-        uses: GreenNexus-Core/gh-actions/.github/actions/trivy-scan@main
+        uses: felipementel/gh-actions/.github/actions/trivy-scan@main
         with:
           scan-type: 'fs'
           scan-ref: '${{ env.working_directory }}'
@@ -149,7 +149,7 @@ jobs:
           trivyignores: ${{ steps.check-trivyignore.outputs.path }}
 
       - name: 🏷️ Extract Application Version
-        uses: GreenNexus-Core/gh-actions/.github/actions/react-get-package-data@main
+        uses: felipementel/gh-actions/.github/actions/react-get-package-data@main
         id: get-package-data
         with:
           environment: ${{ inputs.environment }}
@@ -193,8 +193,8 @@ jobs:
 
       # ENV para o Data Processor
       - name: Create .env for Data Processor
-        if: github.repository == 'GreenNexus-Core/gn-web-data-processor'
-        uses: GreenNexus-Core/gh-actions/.github/actions/react-env-data-processor@main
+        if: github.repository == 'felipementelgn-web-data-processor'
+        uses: felipementel/gh-actions/.github/actions/react-env-data-processor@main
         env:
           VITE_ADMIN_API_URL: ${{ vars.VITE_ADMIN_API_URL }}
           VITE_AUTH_API_URL: ${{ vars.VITE_AUTH_API_URL }}
@@ -215,8 +215,8 @@ jobs:
 
       # ENV para o Admin Plataforma
       - name: Create .env for Admin Plataforma
-        if: github.repository == 'GreenNexus-Core/gn-web-admin-plataforma'
-        uses: GreenNexus-Core/gh-actions/.github/actions/react-env-admin-plataforma@main
+        if: github.repository == 'felipementelgn-web-admin-plataforma'
+        uses: felipementel/gh-actions/.github/actions/react-env-admin-plataforma@main
         env:
           VITE_API_AUTH_URL: ${{ vars.VITE_API_AUTH_URL }}
           VITE_API_PROPERTY_URL: ${{ vars.VITE_API_PROPERTY_URL }}
@@ -228,8 +228,8 @@ jobs:
 
       # ENV para o Slider
       - name: Create .env for Slider
-        if: github.repository == 'GreenNexus-Core/gn-web-slider'
-        uses: GreenNexus-Core/gh-actions/.github/actions/react-env-slider@main
+        if: github.repository == 'felipementelgn-web-slider'
+        uses: felipementel/gh-actions/.github/actions/react-env-slider@main
         env:
           VITE_IMGS_BASE_URL: ${{ vars.VITE_IMGS_BASE_URL }}
           AZURE_IMGS_CONTAINER_URL: ${{ vars.AZURE_IMGS_CONTAINER_URL }}
@@ -240,8 +240,8 @@ jobs:
 
       # ENV para o Plataforma (principal)
       - name: Create .env for Plataforma
-        if: github.repository == 'GreenNexus-Core/gn-web-plataforma'
-        uses: GreenNexus-Core/gh-actions/.github/actions/react-env-plataforma@main
+        if: github.repository == 'felipementelgn-web-plataforma'
+        uses: felipementel/gh-actions/.github/actions/react-env-plataforma@main
         env:
           VITE_API_URL: ${{ vars.VITE_API_URL }}
           VITE_PROPERTY_SERVICE_URL: ${{ vars.VITE_PROPERTY_SERVICE_URL }}
@@ -272,8 +272,8 @@ jobs:
           environment: ${{ inputs.environment }}
 
       - name: Create .env for Report Design
-        if: github.repository == 'GreenNexus-Core/gn-web-report-design'
-        uses: GreenNexus-Core/gh-actions/.github/actions/react-env-report-design@main
+        if: github.repository == 'felipementelgn-web-report-design'
+        uses: felipementel/gh-actions/.github/actions/react-env-report-design@main
         env:
           VITE_REPORT_DESIGN_API_URL: ${{ vars.VITE_REPORT_DESIGN_API_URL }}
           VITE_AUTH_SERVICE_URL: ${{ vars.VITE_AUTH_SERVICE_URL }}
@@ -449,7 +449,7 @@ jobs:
 
       # DAST/passive scan no site publicado
       - name: 🕷️ OWASP ZAP Baseline
-        uses: GreenNexus-Core/gh-actions/.github/actions/owasp-zap@main
+        uses: felipementel/gh-actions/.github/actions/owasp-zap@main
         with:
           url: ${{ inputs.url }}
           allow_issue_writing: ${{ inputs.allow_issue_writing }}
@@ -505,7 +505,7 @@ jobs:
           fi
 
       - name: 🏷️ Update Badge Gist
-        uses: GreenNexus-Core/gh-actions/.github/actions/update-badge-gist@main
+        uses: felipementel/gh-actions/.github/actions/update-badge-gist@main
         with:
           gist_id: ${{ vars.BADGE_GIST_ID }}
           gist_token: ${{ secrets.BADGE_GIST_TOKEN }}
