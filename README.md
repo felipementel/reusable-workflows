@@ -66,15 +66,15 @@
 
 | Action | Descrição |
 |--------|-----------|
-| [`python/python-get-version`](.github/actions/python/python-get-version) | Extração de versão do projeto Python |
-| [`python/python-code-quality`](.github/actions/python/python-code-quality) | Qualidade de código com flake8, black, isort, mypy e compileall |
+| [`python/get-version`](.github/actions/python/get-version) | Extração de versão do projeto Python |
+| [`python/code-quality`](.github/actions/python/code-quality) | Qualidade de código com flake8, black, isort, mypy e compileall |
 
 ### Node.js / React
 
 | Action | Descrição |
 |--------|-----------|
-| [`node/node-get-package-data`](.github/actions/node/node-get-package-data) | Extração de versão do `package.json` |
-| [`node/react-env-values`](.github/actions/node/react-env-values) | Criação de `.env` para aplicações React |
+| [`node/get-package-data`](.github/actions/node/get-package-data) | Extração de versão do `package.json` |
+| [`node/env-values`](.github/actions/node/env-values) | Criação de `.env` para aplicações React |
 
 ### Git / Utilitários
 
@@ -132,14 +132,11 @@
 
 | Nome | Obrigatório | Descrição |
 |------|:-----------:|-----------|
-| `AZURE_CREDENTIALS` | ✅ | JSON com as credenciais do Service Principal Azure (saída de `az ad sp create-for-rbac`) |
+| `AZURE_CLIENT_ID` | ✅ | Client ID do Service Principal Azure para autenticação OIDC |
+| `AZURE_TENANT_ID` | ✅ | Tenant ID do Azure AD para autenticação OIDC |
+| `AZURE_SUBSCRIPTION_ID` | ✅ | Subscription ID do Azure para autenticação OIDC |
 
-**Variables** (Settings → Secrets and variables → Actions → Variables):
-
-| Nome | Obrigatório | Descrição |
-|------|:-----------:|-----------|
-| `AZURE_RG` | ✅ | Base do nome do Resource Group (ex: `rg-myorg`) |
-| `AZURE_ACAE_BASE` | ✅ | Base do nome do Container App Environment (ex: `cae-myorg`) |
+> Os valores `azureRgBase` e `acaeBaseName` são passados como **inputs** do workflow caller (`with:`).
 
 ### `python-sandbox-api-build.yml`
 
@@ -161,14 +158,11 @@
 
 | Nome | Obrigatório | Descrição |
 |------|:-----------:|-----------|
-| `AZURE_CREDENTIALS` | ✅ | JSON com as credenciais do Service Principal Azure (saída de `az ad sp create-for-rbac`) |
+| `AZURE_CLIENT_ID` | ✅ | Client ID do Service Principal Azure para autenticação OIDC |
+| `AZURE_TENANT_ID` | ✅ | Tenant ID do Azure AD para autenticação OIDC |
+| `AZURE_SUBSCRIPTION_ID` | ✅ | Subscription ID do Azure para autenticação OIDC |
 
-**Variables** (Settings → Secrets and variables → Actions → Variables):
-
-| Nome | Obrigatório | Descrição |
-|------|:-----------:|-----------|
-| `AZURE_RG` | ✅ | Base do nome do Resource Group (ex: `rg-myorg`) |
-| `AZURE_ACAE_BASE` | ✅ | Base do nome do Container App Environment (ex: `cae-myorg`) |
+> Os valores `azureRgBase` e `acaeBaseName` são passados como **inputs** do workflow caller (`with:`).
 
 ---
 
