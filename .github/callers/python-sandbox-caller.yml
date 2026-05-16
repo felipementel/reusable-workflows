@@ -3,8 +3,8 @@ run-name: "${{ github.actor }} | ${{ inputs.buildMode }} | ${{ inputs.environmen
 
 # ---------------------------------------------------------------------------
 # EXEMPLO de caller para os workflows:
-#   - felipementel/reusable-workflows/.github/workflows/python-sandbox-api-build.yml
-#   - felipementel/reusable-workflows/.github/workflows/python-sandbox-api-deploy-aca.yml
+#   - felipementel/gh-actions/.github/workflows/python-sandbox-api-build.yml
+#   - felipementel/gh-actions/.github/workflows/python-sandbox-api-deploy-aca.yml
 
 # Pré-requisitos no repositório caller:
 #   Secrets: GITLEAKS_LICENSE, GH_PACKAGES_TOKEN, AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID
@@ -42,7 +42,7 @@ on:
 jobs:
   build:
     name: Build
-    uses: felipementel/reusable-workflows/.github/workflows/python-sandbox-api-build.yml@main
+    uses: felipementel/gh-actions/.github/workflows/python-sandbox-api-build.yml@main
     with:
       # Passa 'Build + Push' para o workflow quando o caller selecionar qualquer
       # opção que inclua push (incluindo a opção com deploy)
@@ -82,7 +82,7 @@ jobs:
       inputs.buildMode == 'Build + Push + Deploy' &&
       needs.build.outputs.image-exists == 'false'
     needs: [build]
-    uses: felipementel/reusable-workflows/.github/workflows/python-sandbox-api-deploy-aca.yml@main
+    uses: felipementel/gh-actions/.github/workflows/python-sandbox-api-deploy-aca.yml@main
     with:
       environment: ${{ inputs.environment || 'DEV' }}
       tagVersion: ${{ needs.build.outputs.tag-version }}

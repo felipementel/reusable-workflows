@@ -3,8 +3,8 @@ run-name: "${{ github.actor }} | ${{ inputs.buildMode }} | ${{ inputs.environmen
 
 # ---------------------------------------------------------------------------
 # EXEMPLO de caller para os workflows:
-#   - felipementel/reusable-workflows/.github/workflows/react-sandbox-web-build.yml
-#   - felipementel/reusable-workflows/.github/workflows/react-sandbox-web-deploy-swa.yml
+#   - felipementel/gh-actions/.github/workflows/react-sandbox-web-build.yml
+#   - felipementel/gh-actions/.github/workflows/react-sandbox-web-deploy-swa.yml
 #
 # Pré-requisitos no repositório caller:
 #   Secrets: GITLEAKS_LICENSE, AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID, AZURE_STATIC_WEB_APPS_API_TOKEN
@@ -42,7 +42,7 @@ on:
 jobs:
   build:
     name: Build
-    uses: felipementel/reusable-workflows/.github/workflows/react-sandbox-web-build.yml@main
+    uses: felipementel/gh-actions/.github/workflows/react-sandbox-web-build.yml@main
     with:
       environment: ${{ inputs.environment || 'DEV' }}
       nodeVersion: '24.x'
@@ -64,7 +64,7 @@ jobs:
       github.event_name == 'workflow_dispatch' &&
       inputs.buildMode == 'Build + Deploy'
     needs: [build]
-    uses: felipementel/reusable-workflows/.github/workflows/react-sandbox-web-deploy-swa.yml@main
+    uses: felipementel/gh-actions/.github/workflows/react-sandbox-web-deploy-swa.yml@main
     with:
       environment: ${{ inputs.environment || 'DEV' }}
       appName: ${{ needs.build.outputs.app-name }}

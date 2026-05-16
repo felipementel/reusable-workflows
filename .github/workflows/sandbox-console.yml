@@ -344,7 +344,7 @@ jobs:
     steps:
       - name: 🔍 Check if image exists in registry
         id: check-image-and-tag
-        uses: felipementel/reusable-workflows/.github/actions/tools/docker/check-image@main
+        uses: felipementel/gh-actions/.github/actions/tools/docker/check-image@main
         with:
           registry: ghcr.io
           registry-username: ${{ github.actor }}
@@ -373,17 +373,17 @@ jobs:
           sparse-checkout-cone-mode: false
 
       - name: 🐳 Docker Setup
-        uses: felipementel/reusable-workflows/.github/actions/tools/docker/setup@main
+        uses: felipementel/gh-actions/.github/actions/tools/docker/setup@main
 
       - name: 🐳 Docker Login
-        uses: felipementel/reusable-workflows/.github/actions/tools/docker/login@main
+        uses: felipementel/gh-actions/.github/actions/tools/docker/login@main
         with:
           registry: ghcr.io
           registry-username: ${{ github.actor }}
           registry-password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🐳 Docker Build and Push
-        uses: felipementel/reusable-workflows/.github/actions/tools/docker/buildx@main
+        uses: felipementel/gh-actions/.github/actions/tools/docker/buildx@main
         with:
           registry: ghcr.io
           registry-username: ${{ github.actor }}

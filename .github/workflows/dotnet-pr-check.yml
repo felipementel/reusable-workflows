@@ -115,7 +115,7 @@ jobs:
 
       - name: 🔍 Get-Version from csproj
         id: get-version
-        uses: felipementel/reusable-workflows/.github/actions/dotnet/get-version@main
+        uses: felipementel/gh-actions/.github/actions/dotnet/get-version@main
         with:
           projectBaseDir: ${{ inputs.projectBaseDir }}
           mainProject: ${{ inputs.mainProject }}
@@ -132,7 +132,7 @@ jobs:
 
       - name: 🧪 Dotnet Test & Coverage
         id: dotnet-test
-        uses: felipementel/reusable-workflows/.github/actions/dotnet/dotnet-test@main
+        uses: felipementel/gh-actions/.github/actions/dotnet/dotnet-test@main
         with:
           testsFolder: ${{ inputs.testsFolder }}
           reportTitle: ${{ inputs.reportTitle }}
@@ -146,17 +146,17 @@ jobs:
 
       - name: 🧱📤 Git Leaks
         if: github.event_name != 'pull_request_target'
-        uses: felipementel/reusable-workflows/.github/actions/tools/security/giteaks@main
+        uses: felipementel/gh-actions/.github/actions/tools/security/giteaks@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           gitleaks-license: ${{ secrets.GITLEAKS_LICENSE }}
 
       - name: 🐋 Docker Install
         if: ${{ steps.dotnet-test.outputs.has-tests == 'true' }}
-        uses: felipementel/reusable-workflows/.github/actions/tools/docker/install@main
+        uses: felipementel/gh-actions/.github/actions/tools/docker/install@main
 
       - name: 📸 SonarCloud Analysis
-        uses: felipementel/reusable-workflows/.github/actions/tools/code-quality/sonar-cloud-dotnet@main
+        uses: felipementel/gh-actions/.github/actions/tools/code-quality/sonar-cloud-dotnet@main
         with:
           has-tests: ${{ steps.dotnet-test.outputs.has-tests }}
           sonar-project-key: ${{ secrets.SONAR_PROJECT_KEY }}
@@ -171,7 +171,7 @@ jobs:
           java-distro: ${{ env.javaDistro }}
 
       - name: 🐳 Docker Build (local, for Snyk scan)
-        uses: felipementel/reusable-workflows/.github/actions/tools/docker/buildx@main
+        uses: felipementel/gh-actions/.github/actions/tools/docker/buildx@main
         with:
           registry: ghcr.io
           registry-username: ${{ github.actor }}
@@ -182,7 +182,7 @@ jobs:
           push: 'false'
 
       - name: 🍵 Snyk Security Scan
-        uses: felipementel/reusable-workflows/.github/actions/tools/security/snyk-dotnet@main
+        uses: felipementel/gh-actions/.github/actions/tools/security/snyk-dotnet@main
         with:
           snyk-token: ${{ secrets.SNYK_TOKEN }}
           projectBaseDir: ${{ inputs.projectBaseDir }}
@@ -205,7 +205,7 @@ jobs:
 
       - name: 🎗️ Spectral OpenAPI Lint
         if: ${{ inputs.openAPIFolder != '' }}
-        uses: felipementel/reusable-workflows/.github/actions/tools/code-quality/spectral@main
+        uses: felipementel/gh-actions/.github/actions/tools/code-quality/spectral@main
         with:
           openapi-files-path: ./output_build/${{ inputs.openAPIFolder }}
           node-version: ${{ env.nodeVersion }}
@@ -232,7 +232,7 @@ jobs:
     steps:
       - name: 🔍 Check if image exists in registry
         id: check-image-and-tag
-        uses: felipementel/reusable-workflows/.github/actions/tools/docker/check-image@main
+        uses: felipementel/gh-actions/.github/actions/tools/docker/check-image@main
         with:
           registry: ghcr.io
           registry-username: ${{ github.actor }}

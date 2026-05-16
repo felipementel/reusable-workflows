@@ -299,7 +299,7 @@ jobs:
           retention-days: 30
 
       - name: 📸 SonarCloud Analysis
-        uses: felipementel/reusable-workflows/.github/actions/tools/code-quality/sonar-cloud-python@main
+        uses: felipementel/gh-actions/.github/actions/tools/code-quality/sonar-cloud-python@main
         with:
           has-tests: ${{ steps.check-tests.outputs.HAS_TESTS }}
           sonar-project-key: ${{ secrets.SONAR_PROJECT_KEY }}

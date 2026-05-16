@@ -305,7 +305,7 @@ jobs:
         working-directory: ${{ inputs.workingDirectory }}
 
       - name: 📸 SonarCloud Analysis
-        uses: felipementel/reusable-workflows/.github/actions/tools/code-quality/sonar-cloud-node@main
+        uses: felipementel/gh-actions/.github/actions/tools/code-quality/sonar-cloud-node@main
         with:
           has-tests: 'false'
           sonar-project-key: ${{ secrets.SONAR_PROJECT_KEY }}

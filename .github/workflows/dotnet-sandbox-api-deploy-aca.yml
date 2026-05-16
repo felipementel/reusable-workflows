@@ -80,7 +80,7 @@ jobs:
     steps:
       - name: 🧾 Compute Azure Container App names
         id: naming
-        uses: felipementel/reusable-workflows/.github/actions/azure/aca-naming@main
+        uses: felipementel/gh-actions/.github/actions/azure/aca-naming@main
         with:
           environment: ${{ inputs.environment }}
           azure-rg-base: ${{ inputs.azureRgBase }}
@@ -89,7 +89,7 @@ jobs:
 
       - name: 🚀 Deploy to Azure Container App
         id: deploy
-        uses: felipementel/reusable-workflows/.github/actions/azure/aca-deploy@main
+        uses: felipementel/gh-actions/.github/actions/azure/aca-deploy@main
         with:
           azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
           azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -102,7 +102,7 @@ jobs:
           poll-interval-seconds: ${{ inputs.deployPollIntervalSeconds }}
 
       - name: 📝 Deployment Summary
-        uses: felipementel/reusable-workflows/.github/actions/azure/aca-summary@main
+        uses: felipementel/gh-actions/.github/actions/azure/aca-summary@main
         with:
           tag-version: ${{ inputs.tagVersion }}
           now: ${{ github.run_id }}

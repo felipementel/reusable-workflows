@@ -283,7 +283,7 @@ jobs:
           fail_ci_if_error: false
 
       - name: 📸 SonarCloud Analysis
-        uses: felipementel/reusable-workflows/.github/actions/tools/code-quality/sonar-cloud-python@main
+        uses: felipementel/gh-actions/.github/actions/tools/code-quality/sonar-cloud-python@main
         with:
           has-tests: ${{ steps.check-tests.outputs.HAS_TESTS }}
           sonar-project-key: ${{ secrets.SONAR_PROJECT_KEY }}
@@ -361,7 +361,7 @@ jobs:
 
       - name: 🚀 Spectral OpenAPI Lint
         if: ${{ inputs.openAPIFolder != '' }}
-        uses: felipementel/reusable-workflows/.github/actions/tools/code-quality/spectral@main
+        uses: felipementel/gh-actions/.github/actions/tools/code-quality/spectral@main
         with:
           openapi-files-path: ./${{ inputs.openAPIFolder }}
           node-version: '22'

@@ -3,8 +3,8 @@ run-name: "${{ github.actor }} | ${{ inputs.buildMode }} | ${{ inputs.environmen
 
 # ---------------------------------------------------------------------------
 # EXEMPLO de caller para os workflows:
-#   - felipementel/reusable-workflows/.github/workflows/dotnet-sandbox-api-build.yml
-#   - felipementel/reusable-workflows/.github/workflows/dotnet-sandbox-api-deploy-aca.yml
+#   - felipementel/gh-actions/.github/workflows/dotnet-sandbox-api-build.yml
+#   - felipementel/gh-actions/.github/workflows/dotnet-sandbox-api-deploy-aca.yml
 #
 # Pré-requisitos no repositório caller:
 #   Secrets: SONAR_PROJECT_KEY, GITLEAKS_LICENSE, SNYK_TOKEN, SONAR_TOKEN,
@@ -42,7 +42,7 @@ on:
 jobs:
   build:
     name: Build
-    uses: felipementel/reusable-workflows/.github/workflows/dotnet-sandbox-api-build.yml@main
+    uses: felipementel/gh-actions/.github/workflows/dotnet-sandbox-api-build.yml@main
     with:
       buildMode: ${{ github.event_name == 'workflow_dispatch' && inputs.buildMode || 'Build' }}
       environment: ${{ inputs.environment || 'DEV' }}
@@ -79,7 +79,7 @@ jobs:
       inputs.buildMode == 'Build + Tag Validation + Deploy' &&
       needs.build.outputs.image-exists == 'false'
     needs: [build]
-    uses: felipementel/reusable-workflows/.github/workflows/dotnet-sandbox-api-deploy-aca.yml@main
+    uses: felipementel/gh-actions/.github/workflows/dotnet-sandbox-api-deploy-aca.yml@main
     with:
       environment: ${{ inputs.environment || 'DEV' }}
       tagVersion: ${{ needs.build.outputs.tag-version }}
