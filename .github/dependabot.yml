@@ -23,7 +23,8 @@ updates:
       prefix: "[github actions] "
 
   - package-ecosystem: "github-actions"
-    directory: "/.github/actions/"
+    directories:
+      - "/.github/actions/**"
     schedule:
       interval: "weekly"
       day: "sunday"
