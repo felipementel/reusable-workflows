@@ -11,7 +11,7 @@ updates:
     schedule:
       interval: "weekly"
       day: "sunday"
-      time: "01:00"
+      time: "02:00"
       timezone: "America/Sao_Paulo"
     reviewers:
       - "felipementel"
@@ -65,7 +65,7 @@ updates:
     schedule:
       interval: "weekly"
       day: "sunday"
-      time: "01:00"
+      time: "02:00"
       timezone: "America/Sao_Paulo"
     reviewers:
       - "felipementel"
