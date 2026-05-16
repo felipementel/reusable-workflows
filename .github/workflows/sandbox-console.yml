@@ -136,7 +136,7 @@ jobs:
           echo "NOW=$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_OUTPUT
 
       - name: Sys - Checkout
-        uses: felipementel/gh-actions/.github/actions/_wrapper/github/checkout
+        uses: felipementel/reusable-workflows/.github/actions/_wrapper/github/checkout@main
         with:
           sparse-checkout: |
             src
@@ -190,7 +190,7 @@ jobs:
           echo "VERSION_SUFFIX=$versionSuffix" >> "$GITHUB_OUTPUT"
 
       - name: Sys - Setup .NET version ${{ inputs.dotnetVersion }}
-        uses: felipementel/gh-actions/.github/actions/_wrapper/github/setup-dotnet
+        uses: felipementel/reusable-workflows/.github/actions/_wrapper/github/setup-dotnet@main
         with:
           dotnet-version: ${{ inputs.dotnetVersion }}
 
@@ -212,13 +212,13 @@ jobs:
 
       - name: 🔐 Set up JDK 23 to use with SonarCloud
         if: ${{ inputs.sonar-qube }}
-        uses: felipementel/gh-actions/.github/actions/_wrapper/github/setup-java
+        uses: felipementel/reusable-workflows/.github/actions/_wrapper/github/setup-java@main
         with:
           java-version: 23
           distribution: 'zulu'
 
       - name: 🔐 SonarCloud packages cache
-        uses: felipementel/gh-actions/.github/actions/_wrapper/github/cache
+        uses: felipementel/reusable-workflows/.github/actions/_wrapper/github/cache@main
         if: ${{ inputs.sonar-qube }}
         with:
           path: ~/sonar/cache
@@ -228,7 +228,7 @@ jobs:
       - name: 🔐 SonarCloud scanner cache
         id: cache-sonar-scanner
         if: ${{ inputs.sonar-qube }}
-        uses: felipementel/gh-actions/.github/actions/_wrapper/github/cache
+        uses: felipementel/reusable-workflows/.github/actions/_wrapper/github/cache@main
         with:
           path: ./.sonar/scanner
           key: ${{ runner.os }}-sonar-scanner
@@ -299,7 +299,7 @@ jobs:
 
       - name: Upload coverage report artifact
         if: ${{ inputs.unit-tests }}
-        uses: felipementel/gh-actions/.github/actions/_wrapper/github/upload-artifact
+        uses: felipementel/reusable-workflows/.github/actions/_wrapper/github/upload-artifact@main
         with:
           name: CoverageReport
           path: coveragereport
@@ -365,7 +365,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: felipementel/gh-actions/.github/actions/_wrapper/github/checkout
+        uses: felipementel/reusable-workflows/.github/actions/_wrapper/github/checkout@main
         with:
           fetch-depth: 0
           sparse-checkout: |

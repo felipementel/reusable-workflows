@@ -96,7 +96,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: felipementel/gh-actions/.github/actions/_wrapper/github/checkout
+        uses: felipementel/reusable-workflows/.github/actions/_wrapper/github/checkout@main
         with:
           ref: ${{ github.ref }}
           fetch-depth: 0
@@ -156,7 +156,7 @@ jobs:
           working_directory: ${{ inputs.working_directory }}
 
       - name: Setup Node ${{ inputs.node_version }} (with npm cache)
-        uses: felipementel/gh-actions/.github/actions/_wrapper/github/setup-node
+        uses: felipementel/reusable-workflows/.github/actions/_wrapper/github/setup-node@main
         with:
           node-version: ${{ inputs.node_version }}
           cache: 'npm'
@@ -314,7 +314,7 @@ jobs:
         working-directory: ${{ inputs.working_directory }}
 
       - name: Upload artifact for deployment job
-        uses: felipementel/gh-actions/.github/actions/_wrapper/github/upload-artifact
+        uses: felipementel/reusable-workflows/.github/actions/_wrapper/github/upload-artifact@main
         with:
           name: static-website
           path: ${{ inputs.working_directory }}/dist
@@ -476,14 +476,14 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: 🔍 Checkout (package.json only)
-        uses: felipementel/gh-actions/.github/actions/_wrapper/github/checkout
+        uses: felipementel/reusable-workflows/.github/actions/_wrapper/github/checkout@main
         with:
           sparse-checkout: |
             ${{ inputs.working_directory }}/package.json
           sparse-checkout-cone-mode: false
 
       - name: Setup Node ${{ inputs.node_version }}
-        uses: felipementel/gh-actions/.github/actions/_wrapper/github/setup-node
+        uses: felipementel/reusable-workflows/.github/actions/_wrapper/github/setup-node@main
         with:
           node-version: ${{ inputs.node_version }}
 

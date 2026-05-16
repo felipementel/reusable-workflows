@@ -93,7 +93,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: felipementel/gh-actions/.github/actions/_wrapper/github/checkout
+        uses: felipementel/reusable-workflows/.github/actions/_wrapper/github/checkout@main
         with:
           ref: ${{ github.ref }}
           fetch-depth: 0
@@ -171,7 +171,7 @@ jobs:
           version_file: package.json
 
       - name: Setup Node ${{ inputs.node_version }} (with npm cache)
-        uses: felipementel/gh-actions/.github/actions/_wrapper/github/setup-node
+        uses: felipementel/reusable-workflows/.github/actions/_wrapper/github/setup-node@main
         with:
           node-version: ${{ inputs.node_version }}
           cache: 'npm'
