@@ -82,7 +82,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: felipementel/gh-actions/.github/actions/_wrapper/github/checkout
         with:
           ref: ${{ github.ref }}
           fetch-depth: 0
@@ -182,7 +182,7 @@ jobs:
           EOF
 
       - name: Upload OpenAPI spec artifact
-        uses: ./.github/actions/_wrapper/github/upload-artifact
+        uses: felipementel/gh-actions/.github/actions/_wrapper/github/upload-artifact
         with:
           name: openapi-${{ github.run_number }}.json
           path: |
@@ -208,7 +208,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: felipementel/gh-actions/.github/actions/_wrapper/github/checkout
         with:
           sparse-checkout: |
             ${{ inputs.sparse_checkout }}
@@ -258,7 +258,7 @@ jobs:
 
       - name: Upload coverage to Codecov
         if: ${{ steps.check-tests.outputs.HAS_TESTS == 'true' }}
-        uses: codecov/codecov-action@v5
+        uses: felipementel/gh-actions/.github/actions/_wrapper/codecov/codecov-action
         with:
           files: ./tests/results/coverage.xml
           flags: unittests
@@ -292,7 +292,7 @@ jobs:
 
       - name: Archive coverage HTML report
         if: ${{ steps.check-tests.outputs.HAS_TESTS == 'true' }}
-        uses: ./.github/actions/_wrapper/github/upload-artifact
+        uses: felipementel/gh-actions/.github/actions/_wrapper/github/upload-artifact
         with:
           name: coverage-report-unit
           path: tests/results/htmlcov/
@@ -319,7 +319,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: felipementel/gh-actions/.github/actions/_wrapper/github/checkout
 
       - name: 🏷️ Extract Application Version
         uses: felipementel/gh-actions/.github/actions/python/get-version@main
@@ -344,7 +344,7 @@ jobs:
 
       - name: 🔐 Log in to GHCR for image validation
         if: ${{ inputs.image_name != '' }}
-        uses: ./.github/actions/_wrapper/docker/login-action
+        uses: felipementel/gh-actions/.github/actions/_wrapper/docker/login-action
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -403,7 +403,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: felipementel/gh-actions/.github/actions/_wrapper/github/checkout
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -440,7 +440,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: felipementel/gh-actions/.github/actions/_wrapper/github/checkout
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -495,7 +495,7 @@ jobs:
       #     pip-audit
 
       - name: Upload security reports
-        uses: ./.github/actions/_wrapper/github/upload-artifact
+        uses: felipementel/gh-actions/.github/actions/_wrapper/github/upload-artifact
         with:
           name: security-reports
           path: |
@@ -572,7 +572,7 @@ jobs:
           fi
 
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: felipementel/gh-actions/.github/actions/_wrapper/github/checkout
         with:
           sparse-checkout: |
             pyproject.toml

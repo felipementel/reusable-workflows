@@ -1,0 +1,77 @@
+name: 'Codecov (Wrapper)'
+description: 'Wrapper composite action for codecov/codecov-action. Update the version only here.'
+
+inputs:
+  token:
+    description: 'Repository Codecov token. Used to authorize report uploads'
+    required: false
+  files:
+    description: 'Comma-separated list of explicit files to upload'
+    required: false
+  flags:
+    description: 'Comma-separated list of flags to upload to group coverage metrics'
+    required: false
+  name:
+    description: 'Custom defined name of the upload. Visible in the Codecov UI'
+    required: false
+  fail_ci_if_error:
+    description: 'On error, exit with non-zero code'
+    required: false
+    default: 'false'
+  directory:
+    description: 'Folder to search for coverage files'
+    required: false
+  verbose:
+    description: 'Enable verbose logging'
+    required: false
+    default: 'false'
+  working-directory:
+    description: 'Directory in which to execute codecov.sh'
+    required: false
+  disable_search:
+    description: 'Disable search for coverage files'
+    required: false
+    default: 'false'
+  override_branch:
+    description: 'Specify the branch to be displayed with this commit on Codecov'
+    required: false
+  override_commit:
+    description: 'Commit SHA (with 40 chars)'
+    required: false
+  override_pr:
+    description: 'Specify the pull request number manually'
+    required: false
+  slug:
+    description: '[Required when using the org token] Set to the owner/repo slug'
+    required: false
+  version:
+    description: "Which version of the Codecov CLI to use"
+    required: false
+    default: 'latest'
+  use_oidc:
+    description: 'Use OIDC instead of token'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 📊 Upload coverage to Codecov
+      id: codecov
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ inputs.token }}
+        files: ${{ inputs.files }}
+        flags: ${{ inputs.flags }}
+        name: ${{ inputs.name }}
+        fail_ci_if_error: ${{ inputs.fail_ci_if_error }}
+        directory: ${{ inputs.directory }}
+        verbose: ${{ inputs.verbose }}
+        working-directory: ${{ inputs.working-directory }}
+        disable_search: ${{ inputs.disable_search }}
+        override_branch: ${{ inputs.override_branch }}
+        override_commit: ${{ inputs.override_commit }}
+        override_pr: ${{ inputs.override_pr }}
+        slug: ${{ inputs.slug }}
+        version: ${{ inputs.version }}
+        use_oidc: ${{ inputs.use_oidc }}

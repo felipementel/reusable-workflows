@@ -130,7 +130,7 @@ jobs:
           echo "NOW=$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_OUTPUT
 
       - name: 📥 Checkout
-        uses: actions/checkout@v6
+        uses: felipementel/gh-actions/.github/actions/_wrapper/github/checkout
         with:
           ref: ${{ github.ref }}
           fetch-depth: 0
@@ -244,7 +244,7 @@ jobs:
 
       - name: 📊 Upload coverage to Codecov
         if: ${{ steps.check-tests.outputs.HAS_TESTS == 'true' }}
-        uses: codecov/codecov-action@v5
+        uses: felipementel/gh-actions/.github/actions/_wrapper/codecov/codecov-action
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./tests/results/coverage.xml
@@ -289,7 +289,7 @@ jobs:
 
       - name: 🧪📤 Upload test coverage artifacts
         if: ${{ steps.check-tests.outputs.HAS_TESTS == 'true' }}
-        uses: ./.github/actions/_wrapper/github/upload-artifact
+        uses: felipementel/gh-actions/.github/actions/_wrapper/github/upload-artifact
         with:
           name: coverage-reports-${{ github.run_number }}
           path: |
@@ -332,7 +332,7 @@ jobs:
       image-exists: ${{ steps.check-image-and-tag.outputs.IMAGE_EXISTS }}
     steps:
       - name: 🔐 Log in to GHCR
-        uses: ./.github/actions/_wrapper/docker/login-action
+        uses: felipementel/gh-actions/.github/actions/_wrapper/docker/login-action
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -363,21 +363,21 @@ jobs:
 
     steps:
       - name: 📥 Checkout
-        uses: actions/checkout@v6
+        uses: felipementel/gh-actions/.github/actions/_wrapper/github/checkout
         with:
           fetch-depth: 0
 
       - name: 🏗️ Set up QEMU
-        uses: ./.github/actions/_wrapper/docker/setup-qemu-action
+        uses: felipementel/gh-actions/.github/actions/_wrapper/docker/setup-qemu-action
 
       - name: 🏗️ Set up Docker Buildx
-        uses: ./.github/actions/_wrapper/docker/setup-buildx-action
+        uses: felipementel/gh-actions/.github/actions/_wrapper/docker/setup-buildx-action
         with:
           version: latest
           platforms: linux/amd64,linux/arm64
 
       - name: 🔐 Log in to GHCR
-        uses: ./.github/actions/_wrapper/docker/login-action
+        uses: felipementel/gh-actions/.github/actions/_wrapper/docker/login-action
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -385,14 +385,14 @@ jobs:
 
       - name: 🏷️ Extract metadata for Docker
         id: meta
-        uses: ./.github/actions/_wrapper/docker/metadata-action
+        uses: felipementel/gh-actions/.github/actions/_wrapper/docker/metadata-action
         with:
           images: |
             ${{ env.registry }}/${{ inputs.image_name }}
 
       - name: 🐳 Build Docker image (without push)
         id: build
-        uses: ./.github/actions/_wrapper/docker/build-push-action
+        uses: felipementel/gh-actions/.github/actions/_wrapper/docker/build-push-action
         with:
           context: .
           file: ${{ env.dockerfileFolder }}/Dockerfile
@@ -422,7 +422,7 @@ jobs:
           exit-code: '1'
 
       - name: 🚀 Push Docker image (after security scan passed)
-        uses: ./.github/actions/_wrapper/docker/build-push-action
+        uses: felipementel/gh-actions/.github/actions/_wrapper/docker/build-push-action
         with:
           context: .
           file: ${{ env.dockerfileFolder }}/Dockerfile
@@ -823,7 +823,7 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: 📥 Checkout (pyproject.toml only)
-        uses: actions/checkout@v6
+        uses: felipementel/gh-actions/.github/actions/_wrapper/github/checkout
         with:
           sparse-checkout: |
             pyproject.toml

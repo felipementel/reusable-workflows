@@ -62,6 +62,9 @@ updates:
       - "/.github/actions/_wrapper/docker/metadata-action"
       - "/.github/actions/_wrapper/docker/build-push-action"
       - "/.github/actions/_wrapper/sonar/sonarcloud-github-action"
+      - "/.github/actions/_wrapper/github/checkout"
+      - "/.github/actions/_wrapper/github/setup-dotnet"
+      - "/.github/actions/_wrapper/codecov/codecov-action"
     schedule:
       interval: "weekly"
       day: "sunday"

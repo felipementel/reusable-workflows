@@ -56,7 +56,7 @@ runs:
 
     - name: 📤 Upload Checkov results
       if: ${{ inputs.upload_results == 'true' }}
-      uses: ./.github/actions/_wrapper/github/upload-artifact
+      uses: felipementel/gh-actions/.github/actions/_wrapper/github/upload-artifact
       with:
         name: ${{ inputs.artifact_name }}
         path: |

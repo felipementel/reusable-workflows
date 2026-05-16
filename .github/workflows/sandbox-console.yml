@@ -136,7 +136,7 @@ jobs:
           echo "NOW=$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_OUTPUT
 
       - name: Sys - Checkout
-        uses: actions/checkout@v4
+        uses: felipementel/gh-actions/.github/actions/_wrapper/github/checkout
         with:
           sparse-checkout: |
             src
@@ -190,7 +190,7 @@ jobs:
           echo "VERSION_SUFFIX=$versionSuffix" >> "$GITHUB_OUTPUT"
 
       - name: Sys - Setup .NET version ${{ inputs.dotnetVersion }}
-        uses: actions/setup-dotnet@v4
+        uses: felipementel/gh-actions/.github/actions/_wrapper/github/setup-dotnet
         with:
           dotnet-version: ${{ inputs.dotnetVersion }}
 
@@ -212,13 +212,13 @@ jobs:
 
       - name: 🔐 Set up JDK 23 to use with SonarCloud
         if: ${{ inputs.sonar-qube }}
-        uses: ./.github/actions/_wrapper/github/setup-java
+        uses: felipementel/gh-actions/.github/actions/_wrapper/github/setup-java
         with:
           java-version: 23
           distribution: 'zulu'
 
       - name: 🔐 SonarCloud packages cache
-        uses: ./.github/actions/_wrapper/github/cache
+        uses: felipementel/gh-actions/.github/actions/_wrapper/github/cache
         if: ${{ inputs.sonar-qube }}
         with:
           path: ~/sonar/cache
@@ -228,7 +228,7 @@ jobs:
       - name: 🔐 SonarCloud scanner cache
         id: cache-sonar-scanner
         if: ${{ inputs.sonar-qube }}
-        uses: ./.github/actions/_wrapper/github/cache
+        uses: felipementel/gh-actions/.github/actions/_wrapper/github/cache
         with:
           path: ./.sonar/scanner
           key: ${{ runner.os }}-sonar-scanner
@@ -284,7 +284,7 @@ jobs:
 
       - name: ReportGenerator
         if: ${{ inputs.unit-tests }}
-        uses: danielpalme/ReportGenerator-GitHub-Action@5.4.5
+        uses: danielpalme/ReportGenerator-GitHub-Action@5
         with:
           reports: '**/*coverage.xml'
           targetdir: 'coveragereport'
@@ -299,7 +299,7 @@ jobs:
 
       - name: Upload coverage report artifact
         if: ${{ inputs.unit-tests }}
-        uses: ./.github/actions/_wrapper/github/upload-artifact
+        uses: felipementel/gh-actions/.github/actions/_wrapper/github/upload-artifact
         with:
           name: CoverageReport
           path: coveragereport
@@ -365,7 +365,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: felipementel/gh-actions/.github/actions/_wrapper/github/checkout
         with:
           fetch-depth: 0
           sparse-checkout: |

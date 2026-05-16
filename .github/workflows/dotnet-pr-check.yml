@@ -105,7 +105,7 @@ jobs:
           echo "NOW=$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_OUTPUT
 
       - name: 📥 Checkout
-        uses: actions/checkout@v4
+        uses: felipementel/gh-actions/.github/actions/_wrapper/github/checkout
         with:
           ref: ${{ github.ref }}
           sparse-checkout: |
@@ -121,7 +121,7 @@ jobs:
           mainProject: ${{ inputs.mainProject }}
 
       - name: 🛠️ Setup .NET version ${{ inputs.dotnetVersion }}
-        uses: actions/setup-dotnet@v4
+        uses: felipementel/gh-actions/.github/actions/_wrapper/github/setup-dotnet
         with:
           dotnet-version: ${{ inputs.dotnetVersion }}
 
